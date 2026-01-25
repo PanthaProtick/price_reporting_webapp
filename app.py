@@ -30,7 +30,7 @@ def after_request(response):
 @login_required
 def index():
     """Home page"""
-    return
+    return render_template("index.html")
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -57,7 +57,7 @@ def login():
 
         # Ensure username exists and password is correct
         if len(rows) != 1 or not check_password_hash(
-            rows[0]["hash"], request.form.get("password")
+            rows[0]["password_hash"], request.form.get("password")
         ):
             return apology("invalid username and/or password", 403)
 
@@ -88,11 +88,14 @@ def register():
     """Register user"""
     if request.method == "POST":
         username = request.form.get("username")
+        email = request.form.get("email")
         password = request.form.get("password")
         confirmation = request.form.get("confirmation")
 
         if not username:
             return apology("Must provide username", 400)
+        if not email:
+            return apology("Must provide email", 400)
         if not password:
             return apology("Must provide password", 400)
         if not confirmation:
@@ -101,12 +104,20 @@ def register():
         if password != confirmation:
             return apology("Passwords do not match", 400)
 
+        # check username/email uniqueness
+        rows = db.execute("SELECT id FROM users WHERE username = ?", username)
+        if len(rows) > 0:
+            return apology("Username already exists", 400)
+        rows = db.execute("SELECT id FROM users WHERE email = ?", email)
+        if len(rows) > 0:
+            return apology("Email already registered", 400)
+
         passhash = generate_password_hash(password)
 
         try:
-            db.execute("INSERT INTO users (username,hash) VALUES(?,?)", username, passhash)
-        except ValueError:
-            return apology("Username already exists", 400)
+            db.execute("INSERT INTO users (username, email, password_hash) VALUES(?,?,?)", username, email, passhash)
+        except Exception:
+            return apology("Registration failed", 400)
 
         return redirect("/login")
     else:

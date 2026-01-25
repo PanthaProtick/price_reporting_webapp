@@ -1,0 +1,42 @@
+{% extends "layout.html" %}
+
+{% block title %}Register - Price Reporting{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-5">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h3 class="card-title mb-3">Create account</h3>
+        <form method="post" action="/register">
+          <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <input class="form-control" id="username" name="username" required autofocus>
+          </div>
+
+          <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input class="form-control" id="email" name="email" type="email" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input class="form-control" id="password" name="password" type="password" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="confirmation" class="form-label">Confirm Password</label>
+            <input class="form-control" id="confirmation" name="confirmation" type="password" required>
+          </div>
+
+          <div class="d-grid">
+            <button class="btn btn-success" type="submit">Register</button>
+          </div>
+        </form>
+        <hr>
+        <p class="small mb-0">Already have an account? <a href="/login">Log in</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
