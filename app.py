@@ -3,7 +3,7 @@ from flask import Flask, flash, redirect, render_template, request, session
 from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from helpers import apology, login_required, score_apparel, score_electronics, score_food, score_pharma
+from helpers import apology, login_required, score_apparel, score_electronics, score_food, score_pharma, is_valid_email
 
 # Configure application
 app = Flask(__name__)
@@ -96,6 +96,8 @@ def register():
             return apology("Must provide username", 400)
         if not email:
             return apology("Must provide email", 400)
+        elif not is_valid_email(email):
+            return apology("Invalid email format", 400)
         if not password:
             return apology("Must provide password", 400)
         if not confirmation:

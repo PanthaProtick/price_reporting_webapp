@@ -1,5 +1,15 @@
+import re
 from flask import redirect, render_template, session
 from functools import wraps
+
+EMAIL_REGEX = re.compile(
+    r"^(?:[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+"
+    r"(?:\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*|"
+    r'"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|'
+    r'\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@'
+    r"(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+"
+    r"[a-zA-Z]{2,})$"
+)
 
 
 def apology(message, code=400):
@@ -41,6 +51,14 @@ def login_required(f):
         return f(*args, **kwargs)
 
     return decorated_function
+
+def is_valid_email(email: str) -> bool:
+    """
+    Validates an email string against a strict RFC 5322 regex.
+    Returns True if valid, False otherwise.
+    """
+    email = email.strip()
+    return bool(EMAIL_REGEX.match(email))
 
 def score_electronics(report: dict) -> float:
     """
