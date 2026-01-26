@@ -1,0 +1,47 @@
+{% extends "layout.html" %}
+
+{% block title %}Review Product Alias Proposals{% endblock %}
+
+{% block content %}
+<h1>Review Product Alias Proposals</h1>
+<p class="text-muted">Pending product alias proposals awaiting admin review.</p>
+
+{% if proposals and proposals|length > 0 %}
+  <div class="table-responsive">
+    <table class="table table-striped table-hover">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Product ID</th>
+          <th>Proposed Alias</th>
+          <th>Proposed By</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in proposals %}
+        <tr>
+          <td>{{ p.canonical_name }}</td>
+          <td>{{ p.product_id }}</td>
+          <td>{{ p.proposed_alias }}</td>
+          <td>{{ p.proposed_by }}</td>
+          <td class="text-end">
+            <form method="post" action="/admin/review/product_aliases/approve" style="display:inline-block;margin-right:.25rem;">
+              <input type="hidden" name="id" value="{{ p.id }}">
+              <button class="btn btn-sm btn-success">Approve</button>
+            </form>
+            <form method="post" action="/admin/review/product_aliases/reject" style="display:inline-block;">
+              <input type="hidden" name="id" value="{{ p.id }}">
+              <button class="btn btn-sm btn-danger">Reject</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <p class="text-muted">No proposals to review.</p>
+{% endif %}
+
+{% endblock %}

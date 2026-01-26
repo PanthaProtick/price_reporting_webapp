@@ -1,0 +1,71 @@
+{% extends "layout.html" %}
+
+{% block title %}Create Product Alias{% endblock %}
+
+{% block content %}
+<h1>Create Product Alias</h1>
+
+<form method="post" id="alias-form">
+  <div class="mb-3">
+    <label for="category" class="form-label">Product category</label>
+    <select id="category" name="category" class="form-select" required>
+      <option value="">-- choose category --</option>
+      <option value="electronics">Electronics</option>
+      <option value="pharma">Pharmaceutical</option>
+      <option value="apparel">Apparel</option>
+      <option value="food">Food & Beverage</option>
+    </select>
+  </div>
+
+  <div class="mb-3">
+    <label for="product" class="form-label">Canonical product</label>
+    <select id="product" name="product_id" class="form-select" required>
+      <option value="">-- choose product --</option>
+      {% for p in products %}
+      <option value="{{ p.id }}" data-category="{{ p.category }}">{{ p.canonical_name }} ({{ p.category }})</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="mb-3">
+    <label for="alias_name" class="form-label">Alias name</label>
+    <input type="text" id="alias_name" name="alias_name" class="form-control" required>
+  </div>
+
+  <button type="submit" class="btn btn-primary">Submit Alias</button>
+</form>
+
+<script>
+  // Filter canonical products by selected category
+  (function () {
+    const cat = document.getElementById('category');
+    const prod = document.getElementById('product');
+
+    function filter() {
+      const val = cat.value;
+      for (const opt of prod.options) {
+        const c = opt.dataset.category;
+        if (!val) {
+          opt.hidden = false;
+          opt.disabled = false;
+        } else if (c === val) {
+          opt.hidden = false;
+          opt.disabled = false;
+        } else if (opt.value === '') {
+          opt.hidden = false;
+          opt.disabled = false;
+        } else {
+          opt.hidden = true;
+          opt.disabled = true;
+        }
+      }
+      prod.value = '';
+    }
+
+    cat.addEventListener('change', filter);
+    // initialize filter in case the server preselected anything
+    filter();
+  })();
+</script>
+
+{% endblock %}
