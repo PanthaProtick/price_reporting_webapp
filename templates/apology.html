@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Apology
+{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-center align-items-center" style="min-height: calc(100vh - 56px);">
+        <div class="text-center">
+            <!-- https://memegen.link/ -->
+            <!-- https://knowyourmeme.com/memes/grumpy-cat -->
+
+            {% set meme_src = 'https://api.memegen.link/images/custom/' ~ (top|urlencode) ~ '/' ~ (bottom|urlencode) ~ '.jpg?background=https://i.imgur.com/CsCgN7Ll.png&width=400' %}
+
+            <img alt="{{ top }}" class="border img-fluid" src="{{ meme_src }}" title="{{ top }}">
+        </div>
+    </div>
+{% endblock %}
