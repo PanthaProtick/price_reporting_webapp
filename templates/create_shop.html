@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+
+{% block title %}Create Shop{% endblock %}
+
+{% block content %}
+<h1>Create Shop</h1>
+
+<form method="post" id="shop-form">
+  <div class="mb-3">
+    <label for="name" class="form-label">Shop name</label>
+    <input type="text" class="form-control" id="name" name="name" required>
+  </div>
+
+  <div class="mb-3">
+    <label for="address" class="form-label">Shop Address</label>
+    <input type="text" class="form-control" id="address" name="address" required>
+  </div>
+
+  <input type="hidden" id="lat" name="latitude">
+  <input type="hidden" id="lon" name="longitude">
+
+  <div id="map" style="height: 480px; width: 100%;" class="mb-3"></div>
+
+  <button type="submit" class="btn btn-primary">Create Shop</button>
+</form>
+
+<!-- Leaflet CSS/JS and page script -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="{{ url_for('static', filename='js/shop_map.js') }}"></script>
+
+{% endblock %}

@@ -3,7 +3,7 @@ from flask import Flask, flash, redirect, render_template, request, session
 from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from helpers import apology, login_required, score_apparel, score_electronics, score_food, score_pharma, is_valid_email
+from helpers import apology, login_required, score_apparel, score_electronics, score_food, score_pharma, is_valid_email, is_admin
 
 # Configure application
 app = Flask(__name__)
@@ -57,7 +57,7 @@ def login():
 
         # Ensure username exists and password is correct
         if len(rows) != 1 or not check_password_hash(
-            rows[0]["password_hash"], request.form.get("password")
+            rows[0]["passhash"], request.form.get("password")
         ):
             return apology("invalid username and/or password", 403)
 
@@ -117,10 +117,73 @@ def register():
         passhash = generate_password_hash(password)
 
         try:
-            db.execute("INSERT INTO users (username, email, password_hash) VALUES(?,?,?)", username, email, passhash)
+            db.execute("INSERT INTO users (username, email, passhash, user_type) VALUES(?,?,?,?)", username, email, passhash, 'user')
         except Exception:
             return apology("Registration failed", 400)
 
         return redirect("/login")
     else:
         return render_template("register.html")
+
+
+@app.route("/create/price_report", methods=["GET", "POST"])
+@login_required
+def create_price_report():
+    if request.method == "POST":
+        # process form submission
+        pass
+
+    else:
+        pass
+    return
+
+@app.route("/create/shop", methods=["GET", "POST"])
+@login_required
+def create_shop():
+    if request.method == "POST":
+        # process form submission
+        name = request.form.get('name')
+        address = request.form.get('address')
+        lat = request.form.get('latitude')
+        lon = request.form.get('longitude')
+
+        if not name:
+            return apology("Must provide shop name", 400)
+        if not address:
+            return apology("Must provide shop address", 400)
+        if not lat or not lon:
+            return apology("Location required", 400)
+
+        try:
+            lat_f = float(lat)
+            lon_f = float(lon)
+        except ValueError:
+            return apology("Invalid latitude/longitude", 400)
+
+        try:
+            db.execute(
+                "INSERT INTO shop_proposals (proposed_name, proposed_address, latitude, longitude, proposed_by) VALUES (?, ?, ?, ?, ?)",
+                name,
+                address,
+                lat_f,
+                lon_f,
+                session.get("user_id"),
+            )
+        except Exception:
+            return apology("Failed to create shop (database error)", 500)
+
+        return redirect("/")
+
+    else:
+        return render_template("create_shop.html")
+
+@app.route("/create/product_alias", methods=["GET", "POST"])
+@login_required
+def create_product_alias():
+    if request.method == "POST":
+        # process form submission
+        pass
+
+    else:
+        pass
+    return

@@ -161,3 +161,6 @@ def score_apparel(report: dict) -> float:
 
     return max(0.0, min(score, 1.0))
 
+def is_admin(user):
+    if user['user_type'] != 'admin':
+        return False
