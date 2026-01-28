@@ -196,29 +196,80 @@ def create_quality_report(price_report_id):
         "SELECT id FROM quality_reports WHERE price_report_id = ?",
         price_report_id
     )
-    if existing_qr:
-        return apology("Quality report already exists for this price report", 400)
-
+    
     category = pr[0]['category']
+    is_update = len(existing_qr) > 0
 
     if request.method == "POST":
         # Process form based on category
         if category == 'electronics':
-            return process_electronics_quality(price_report_id, category)
+            return process_electronics_quality(price_report_id, category, is_update)
         elif category == 'pharma':
-            return process_pharma_quality(price_report_id, category)
+            return process_pharma_quality(price_report_id, category, is_update)
         elif category == 'food':
-            return process_food_quality(price_report_id, category)
+            return process_food_quality(price_report_id, category, is_update)
         elif category == 'apparel':
-            return process_apparel_quality(price_report_id, category)
+            return process_apparel_quality(price_report_id, category, is_update)
         else:
             return apology("Invalid category", 400)
     
     else:
-        return render_template("create_quality_report.html", price_report_id=price_report_id, category=category)
+        # Load existing data if updating
+        existing_data = None
+        if is_update:
+            existing_data = get_existing_quality_data(price_report_id, category)
+        
+        return render_template("create_quality_report.html", 
+                             price_report_id=price_report_id, 
+                             category=category,
+                             is_update=is_update,
+                             existing_data=existing_data)
 
 
-def process_electronics_quality(price_report_id, category):
+def get_existing_quality_data(price_report_id, category):
+    """Fetch existing quality report data based on category"""
+    try:
+        qr = db.execute(
+            "SELECT * FROM quality_reports WHERE price_report_id = ?",
+            price_report_id
+        )
+        if not qr:
+            return None
+        
+        quality_report_id = qr[0]['id']
+        
+        if category == 'electronics':
+            data = db.execute(
+                "SELECT * FROM electronics_quality_reports WHERE quality_report_id = ?",
+                quality_report_id
+            )
+        elif category == 'pharma':
+            data = db.execute(
+                "SELECT * FROM pharma_quality_reports WHERE quality_report_id = ?",
+                quality_report_id
+            )
+        elif category == 'food':
+            data = db.execute(
+                "SELECT * FROM food_quality_reports WHERE quality_report_id = ?",
+                quality_report_id
+            )
+        elif category == 'apparel':
+            data = db.execute(
+                "SELECT * FROM apparel_quality_reports WHERE quality_report_id = ?",
+                quality_report_id
+            )
+        else:
+            return None
+        
+        if data:
+            return {**qr[0], **data[0]}
+        return qr[0]
+    except Exception as e:
+        print(f"Error fetching existing quality data: {e}")
+        return None
+
+
+def process_electronics_quality(price_report_id, category, is_update=False):
     """Process electronics quality report"""
     device_functional = request.form.get('device_functional')
     authenticity_confidence = request.form.get('authenticity_confidence')
@@ -246,41 +297,69 @@ def process_electronics_quality(price_report_id, category):
     quality_score = score_electronics(data)
 
     try:
-        # Insert into quality_reports
-        db.execute(
-            "INSERT INTO quality_reports (price_report_id, user_id, category) VALUES (?, ?, ?)",
-            price_report_id,
-            session.get("user_id"),
-            category
-        )
+        if is_update:
+            # Get existing quality report id
+            qr = db.execute(
+                "SELECT id FROM quality_reports WHERE price_report_id = ?",
+                price_report_id
+            )
+            quality_report_id = qr[0]['id']
+            
+            # Update electronics_quality_reports
+            db.execute(
+                "UPDATE electronics_quality_reports SET "
+                "device_functional = ?, authenticity_confidence = ?, condition_match = ?, "
+                "warranty_honored = ?, accessories_complete = ?, reported_issue = ?, "
+                "normalized_quality_score = ? "
+                "WHERE quality_report_id = ?",
+                data['device_functional'],
+                data['authenticity_confidence'],
+                data['condition_match'],
+                data['warranty_honored'],
+                data['accessories_complete'],
+                data['reported_issue'],
+                quality_score,
+                quality_report_id
+            )
+            
+            flash("Quality report updated successfully!")
+        else:
+            # Insert into quality_reports
+            db.execute(
+                "INSERT INTO quality_reports (price_report_id, user_id, category) VALUES (?, ?, ?)",
+                price_report_id,
+                session.get("user_id"),
+                category
+            )
+            
+            quality_report_id = db.execute("SELECT last_insert_rowid() AS id")[0]['id']
+
+            # Insert into electronics_quality_reports
+            db.execute(
+                "INSERT INTO electronics_quality_reports "
+                "(quality_report_id, device_functional, authenticity_confidence, condition_match, "
+                "warranty_honored, accessories_complete, reported_issue, normalized_quality_score, scoring_version) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                quality_report_id,
+                data['device_functional'],
+                data['authenticity_confidence'],
+                data['condition_match'],
+                data['warranty_honored'],
+                data['accessories_complete'],
+                data['reported_issue'],
+                quality_score,
+                "v1.0"
+            )
+
+            flash("Quality report submitted successfully!")
         
-        quality_report_id = db.execute("SELECT last_insert_rowid() AS id")[0]['id']
-
-        # Insert into electronics_quality_reports
-        db.execute(
-            "INSERT INTO electronics_quality_reports "
-            "(quality_report_id, device_functional, authenticity_confidence, condition_match, "
-            "warranty_honored, accessories_complete, reported_issue, normalized_quality_score, scoring_version) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            quality_report_id,
-            data['device_functional'],
-            data['authenticity_confidence'],
-            data['condition_match'],
-            data['warranty_honored'],
-            data['accessories_complete'],
-            data['reported_issue'],
-            quality_score,
-            "v1.0"
-        )
-
-        flash("Quality report submitted successfully!")
         return redirect("/user/price_reports")
     except Exception as e:
         print(f"Database error: {e}")
         return apology("Failed to create quality report", 500)
 
 
-def process_pharma_quality(price_report_id, category):
+def process_pharma_quality(price_report_id, category, is_update=False):
     """Process pharmaceutical quality report"""
     packaging_sealed = request.form.get('packaging_sealed')
     expiry_date_present = request.form.get('expiry_date_present')
@@ -310,41 +389,70 @@ def process_pharma_quality(price_report_id, category):
     quality_score = score_pharma(data)
 
     try:
-        db.execute(
-            "INSERT INTO quality_reports (price_report_id, user_id, category) VALUES (?, ?, ?)",
-            price_report_id,
-            session.get("user_id"),
-            category
-        )
+        if is_update:
+            # Get existing quality report id
+            qr = db.execute(
+                "SELECT id FROM quality_reports WHERE price_report_id = ?",
+                price_report_id
+            )
+            quality_report_id = qr[0]['id']
+            
+            # Update pharma_quality_reports
+            db.execute(
+                "UPDATE pharma_quality_reports SET "
+                "packaging_sealed = ?, expiry_date_present = ?, expiry_status = ?, "
+                "label_completeness = ?, dosage_label_matches_expected = ?, "
+                "physical_anomalies_present = ?, evidence_photos = ?, normalized_quality_score = ? "
+                "WHERE quality_report_id = ?",
+                data['packaging_sealed'],
+                data['expiry_date_present'],
+                data['expiry_status'],
+                data['label_completeness'],
+                data['dosage_label_matches_expected'],
+                data['physical_anomalies_present'],
+                data['evidence_photos'],
+                quality_score,
+                quality_report_id
+            )
+            
+            flash("Quality report updated successfully!")
+        else:
+            db.execute(
+                "INSERT INTO quality_reports (price_report_id, user_id, category) VALUES (?, ?, ?)",
+                price_report_id,
+                session.get("user_id"),
+                category
+            )
+            
+            quality_report_id = db.execute("SELECT last_insert_rowid() AS id")[0]['id']
+
+            db.execute(
+                "INSERT INTO pharma_quality_reports "
+                "(quality_report_id, packaging_sealed, expiry_date_present, expiry_status, "
+                "label_completeness, dosage_label_matches_expected, physical_anomalies_present, "
+                "evidence_photos, normalized_quality_score, scoring_version) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                quality_report_id,
+                data['packaging_sealed'],
+                data['expiry_date_present'],
+                data['expiry_status'],
+                data['label_completeness'],
+                data['dosage_label_matches_expected'],
+                data['physical_anomalies_present'],
+                data['evidence_photos'],
+                quality_score,
+                "v1.0"
+            )
+
+            flash("Quality report submitted successfully!")
         
-        quality_report_id = db.execute("SELECT last_insert_rowid() AS id")[0]['id']
-
-        db.execute(
-            "INSERT INTO pharma_quality_reports "
-            "(quality_report_id, packaging_sealed, expiry_date_present, expiry_status, "
-            "label_completeness, dosage_label_matches_expected, physical_anomalies_present, "
-            "evidence_photos, normalized_quality_score, scoring_version) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            quality_report_id,
-            data['packaging_sealed'],
-            data['expiry_date_present'],
-            data['expiry_status'],
-            data['label_completeness'],
-            data['dosage_label_matches_expected'],
-            data['physical_anomalies_present'],
-            data['evidence_photos'],
-            quality_score,
-            "v1.0"
-        )
-
-        flash("Quality report submitted successfully!")
         return redirect("/user/price_reports")
     except Exception as e:
         print(f"Database error: {e}")
         return apology("Failed to create quality report", 500)
 
 
-def process_food_quality(price_report_id, category):
+def process_food_quality(price_report_id, category, is_update=False):
     """Process food quality report"""
     packaging_intact = request.form.get('packaging_intact')
     expiry_status = request.form.get('expiry_status')
@@ -372,40 +480,68 @@ def process_food_quality(price_report_id, category):
     quality_score = score_food(data)
 
     try:
-        db.execute(
-            "INSERT INTO quality_reports (price_report_id, user_id, category) VALUES (?, ?, ?)",
-            price_report_id,
-            session.get("user_id"),
-            category
-        )
+        if is_update:
+            # Get existing quality report id
+            qr = db.execute(
+                "SELECT id FROM quality_reports WHERE price_report_id = ?",
+                price_report_id
+            )
+            quality_report_id = qr[0]['id']
+            
+            # Update food_quality_reports
+            db.execute(
+                "UPDATE food_quality_reports SET "
+                "packaging_intact = ?, expiry_status = ?, weight_or_volume_matches_label = ?, "
+                "visible_spoilage_present = ?, abnormal_smell_or_appearance = ?, "
+                "evidence_photos = ?, normalized_quality_score = ? "
+                "WHERE quality_report_id = ?",
+                data['packaging_intact'],
+                data['expiry_status'],
+                data['weight_or_volume_matches_label'],
+                data['visible_spoilage_present'],
+                data['abnormal_smell_or_appearance'],
+                data['evidence_photos'],
+                quality_score,
+                quality_report_id
+            )
+            
+            flash("Quality report updated successfully!")
+        else:
+            db.execute(
+                "INSERT INTO quality_reports (price_report_id, user_id, category) VALUES (?, ?, ?)",
+                price_report_id,
+                session.get("user_id"),
+                category
+            )
+            
+            quality_report_id = db.execute("SELECT last_insert_rowid() AS id")[0]['id']
+
+            db.execute(
+                "INSERT INTO food_quality_reports "
+                "(quality_report_id, packaging_intact, expiry_status, weight_or_volume_matches_label, "
+                "visible_spoilage_present, abnormal_smell_or_appearance, evidence_photos, "
+                "normalized_quality_score, scoring_version) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                quality_report_id,
+                data['packaging_intact'],
+                data['expiry_status'],
+                data['weight_or_volume_matches_label'],
+                data['visible_spoilage_present'],
+                data['abnormal_smell_or_appearance'],
+                data['evidence_photos'],
+                quality_score,
+                "v1.0"
+            )
+
+            flash("Quality report submitted successfully!")
         
-        quality_report_id = db.execute("SELECT last_insert_rowid() AS id")[0]['id']
-
-        db.execute(
-            "INSERT INTO food_quality_reports "
-            "(quality_report_id, packaging_intact, expiry_status, weight_or_volume_matches_label, "
-            "visible_spoilage_present, abnormal_smell_or_appearance, evidence_photos, "
-            "normalized_quality_score, scoring_version) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            quality_report_id,
-            data['packaging_intact'],
-            data['expiry_status'],
-            data['weight_or_volume_matches_label'],
-            data['visible_spoilage_present'],
-            data['abnormal_smell_or_appearance'],
-            data['evidence_photos'],
-            quality_score,
-            "v1.0"
-        )
-
-        flash("Quality report submitted successfully!")
         return redirect("/user/price_reports")
     except Exception as e:
         print(f"Database error: {e}")
         return apology("Failed to create quality report", 500)
 
 
-def process_apparel_quality(price_report_id, category):
+def process_apparel_quality(price_report_id, category, is_update=False):
     """Process apparel quality report"""
     material_quality = request.form.get('material_quality')
     stitching_quality = request.form.get('stitching_quality')
@@ -433,33 +569,61 @@ def process_apparel_quality(price_report_id, category):
     quality_score = score_apparel(data)
 
     try:
-        db.execute(
-            "INSERT INTO quality_reports (price_report_id, user_id, category) VALUES (?, ?, ?)",
-            price_report_id,
-            session.get("user_id"),
-            category
-        )
+        if is_update:
+            # Get existing quality report id
+            qr = db.execute(
+                "SELECT id FROM quality_reports WHERE price_report_id = ?",
+                price_report_id
+            )
+            quality_report_id = qr[0]['id']
+            
+            # Update apparel_quality_reports
+            db.execute(
+                "UPDATE apparel_quality_reports SET "
+                "material_quality = ?, stitching_quality = ?, fit_consistency = ?, "
+                "early_wear_present = ?, color_or_print_fading = ?, "
+                "evidence_photos = ?, normalized_quality_score = ? "
+                "WHERE quality_report_id = ?",
+                data['material_quality'],
+                data['stitching_quality'],
+                data['fit_consistency'],
+                data['early_wear_present'],
+                data['color_or_print_fading'],
+                data['evidence_photos'],
+                quality_score,
+                quality_report_id
+            )
+            
+            flash("Quality report updated successfully!")
+        else:
+            db.execute(
+                "INSERT INTO quality_reports (price_report_id, user_id, category) VALUES (?, ?, ?)",
+                price_report_id,
+                session.get("user_id"),
+                category
+            )
+            
+            quality_report_id = db.execute("SELECT last_insert_rowid() AS id")[0]['id']
+
+            db.execute(
+                "INSERT INTO apparel_quality_reports "
+                "(quality_report_id, material_quality, stitching_quality, fit_consistency, "
+                "early_wear_present, color_or_print_fading, evidence_photos, "
+                "normalized_quality_score, scoring_version) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                quality_report_id,
+                data['material_quality'],
+                data['stitching_quality'],
+                data['fit_consistency'],
+                data['early_wear_present'],
+                data['color_or_print_fading'],
+                data['evidence_photos'],
+                quality_score,
+                "v1.0"
+            )
+
+            flash("Quality report submitted successfully!")
         
-        quality_report_id = db.execute("SELECT last_insert_rowid() AS id")[0]['id']
-
-        db.execute(
-            "INSERT INTO apparel_quality_reports "
-            "(quality_report_id, material_quality, stitching_quality, fit_consistency, "
-            "early_wear_present, color_or_print_fading, evidence_photos, "
-            "normalized_quality_score, scoring_version) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            quality_report_id,
-            data['material_quality'],
-            data['stitching_quality'],
-            data['fit_consistency'],
-            data['early_wear_present'],
-            data['color_or_print_fading'],
-            data['evidence_photos'],
-            quality_score,
-            "v1.0"
-        )
-
-        flash("Quality report submitted successfully!")
         return redirect("/user/price_reports")
     except Exception as e:
         print(f"Database error: {e}")

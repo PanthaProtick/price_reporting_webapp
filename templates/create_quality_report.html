@@ -1,12 +1,12 @@
 {% extends "layout.html" %}
 
-{% block title %}Create Quality Report{% endblock %}
+{% block title %}{% if is_update %}Update{% else %}Create{% endif %} Quality Report{% endblock %}
 
 {% block content %}
 <div class="container">
   <div class="row justify-content-center">
     <div class="col-lg-8">
-      <h1 class="mb-4">Report Product Quality</h1>
+      <h1 class="mb-4">{% if is_update %}Update{% else %}Report{% endif %} Product Quality</h1>
       
       <div class="alert alert-info">
         <strong>Category:</strong> <span class="badge bg-primary">{{ category|capitalize }}</span>
@@ -25,11 +25,13 @@
               <label class="form-label fw-bold">Device Functional? <span class="text-danger">*</span></label>
               <div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="device_functional" id="functional_yes" value="1" required>
+                  <input class="form-check-input" type="radio" name="device_functional" id="functional_yes" value="1" required
+                    {% if existing_data and existing_data.device_functional == 1 %}checked{% endif %}>
                   <label class="form-check-label" for="functional_yes">Yes</label>
                 </div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="device_functional" id="functional_no" value="0">
+                  <input class="form-check-input" type="radio" name="device_functional" id="functional_no" value="0"
+                    {% if existing_data and existing_data.device_functional == 0 %}checked{% endif %}>
                   <label class="form-check-label" for="functional_no">No</label>
                 </div>
               </div>
@@ -39,11 +41,11 @@
               <label for="authenticity_confidence" class="form-label fw-bold">Authenticity Confidence (1-5) <span class="text-danger">*</span></label>
               <select class="form-select" id="authenticity_confidence" name="authenticity_confidence" required>
                 <option value="">Select...</option>
-                <option value="1">1 - Definitely Counterfeit</option>
-                <option value="2">2 - Likely Counterfeit</option>
-                <option value="3">3 - Uncertain</option>
-                <option value="4">4 - Likely Authentic</option>
-                <option value="5">5 - Definitely Authentic</option>
+                <option value="1" {% if existing_data and existing_data.authenticity_confidence == 1 %}selected{% endif %}>1 - Definitely Counterfeit</option>
+                <option value="2" {% if existing_data and existing_data.authenticity_confidence == 2 %}selected{% endif %}>2 - Likely Counterfeit</option>
+                <option value="3" {% if existing_data and existing_data.authenticity_confidence == 3 %}selected{% endif %}>3 - Uncertain</option>
+                <option value="4" {% if existing_data and existing_data.authenticity_confidence == 4 %}selected{% endif %}>4 - Likely Authentic</option>
+                <option value="5" {% if existing_data and existing_data.authenticity_confidence == 5 %}selected{% endif %}>5 - Definitely Authentic</option>
               </select>
             </div>
 
@@ -51,11 +53,11 @@
               <label for="condition_match" class="form-label fw-bold">Condition Match Expectation (1-5) <span class="text-danger">*</span></label>
               <select class="form-select" id="condition_match" name="condition_match" required>
                 <option value="">Select...</option>
-                <option value="1">1 - Much Worse</option>
-                <option value="2">2 - Worse</option>
-                <option value="3">3 - As Expected</option>
-                <option value="4">4 - Better</option>
-                <option value="5">5 - Much Better</option>
+                <option value="1" {% if existing_data and existing_data.condition_match == 1 %}selected{% endif %}>1 - Much Worse</option>
+                <option value="2" {% if existing_data and existing_data.condition_match == 2 %}selected{% endif %}>2 - Worse</option>
+                <option value="3" {% if existing_data and existing_data.condition_match == 3 %}selected{% endif %}>3 - As Expected</option>
+                <option value="4" {% if existing_data and existing_data.condition_match == 4 %}selected{% endif %}>4 - Better</option>
+                <option value="5" {% if existing_data and existing_data.condition_match == 5 %}selected{% endif %}>5 - Much Better</option>
               </select>
             </div>
 
@@ -63,15 +65,18 @@
               <label class="form-label fw-bold">Warranty Honored?</label>
               <div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="warranty_honored" id="warranty_yes" value="1">
+                  <input class="form-check-input" type="radio" name="warranty_honored" id="warranty_yes" value="1"
+                    {% if existing_data and existing_data.warranty_honored == 1 %}checked{% endif %}>
                   <label class="form-check-label" for="warranty_yes">Yes</label>
                 </div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="warranty_honored" id="warranty_no" value="0">
+                  <input class="form-check-input" type="radio" name="warranty_honored" id="warranty_no" value="0"
+                    {% if existing_data and existing_data.warranty_honored == 0 %}checked{% endif %}>
                   <label class="form-check-label" for="warranty_no">No</label>
                 </div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="warranty_honored" id="warranty_na" value="" checked>
+                  <input class="form-check-input" type="radio" name="warranty_honored" id="warranty_na" value="" 
+                    {% if not existing_data or existing_data.warranty_honored is none %}checked{% endif %}>
                   <label class="form-check-label" for="warranty_na">N/A / Not Tested</label>
                 </div>
               </div>
@@ -81,11 +86,13 @@
               <label class="form-label fw-bold">Accessories Complete? <span class="text-danger">*</span></label>
               <div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="accessories_complete" id="accessories_yes" value="1" required>
+                  <input class="form-check-input" type="radio" name="accessories_complete" id="accessories_yes" value="1" required
+                    {% if existing_data and existing_data.accessories_complete == 1 %}checked{% endif %}>
                   <label class="form-check-label" for="accessories_yes">Yes</label>
                 </div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="accessories_complete" id="accessories_no" value="0">
+                  <input class="form-check-input" type="radio" name="accessories_complete" id="accessories_no" value="0"
+                    {% if existing_data and existing_data.accessories_complete == 0 %}checked{% endif %}>
                   <label class="form-check-label" for="accessories_no">No</label>
                 </div>
               </div>
@@ -93,7 +100,8 @@
 
             <div class="mb-3">
               <label for="reported_issue" class="form-label fw-bold">Reported Issues (Optional)</label>
-              <textarea class="form-control" id="reported_issue" name="reported_issue" rows="3" placeholder="Describe any issues or defects..."></textarea>
+              <textarea class="form-control" id="reported_issue" name="reported_issue" rows="3" 
+                placeholder="Describe any issues or defects...">{% if existing_data %}{{ existing_data.reported_issue }}{% endif %}</textarea>
             </div>
 
             {% elif category == 'pharma' %}
@@ -104,11 +112,13 @@
               <label class="form-label fw-bold">Packaging Sealed? <span class="text-danger">*</span></label>
               <div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="packaging_sealed" id="sealed_yes" value="1" required>
+                  <input class="form-check-input" type="radio" name="packaging_sealed" id="sealed_yes" value="1" required
+                    {% if existing_data and existing_data.packaging_sealed == 1 %}checked{% endif %}>
                   <label class="form-check-label" for="sealed_yes">Yes</label>
                 </div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="packaging_sealed" id="sealed_no" value="0">
+                  <input class="form-check-input" type="radio" name="packaging_sealed" id="sealed_no" value="0"
+                    {% if existing_data and existing_data.packaging_sealed == 0 %}checked{% endif %}>
                   <label class="form-check-label" for="sealed_no">No</label>
                 </div>
               </div>
@@ -118,11 +128,13 @@
               <label class="form-label fw-bold">Expiry Date Present? <span class="text-danger">*</span></label>
               <div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="expiry_date_present" id="expiry_present_yes" value="1" required>
+                  <input class="form-check-input" type="radio" name="expiry_date_present" id="expiry_present_yes" value="1" required
+                    {% if existing_data and existing_data.expiry_date_present == 1 %}checked{% endif %}>
                   <label class="form-check-label" for="expiry_present_yes">Yes</label>
                 </div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="expiry_date_present" id="expiry_present_no" value="0">
+                  <input class="form-check-input" type="radio" name="expiry_date_present" id="expiry_present_no" value="0"
+                    {% if existing_data and existing_data.expiry_date_present == 0 %}checked{% endif %}>
                   <label class="form-check-label" for="expiry_present_no">No</label>
                 </div>
               </div>
@@ -132,9 +144,9 @@
               <label for="expiry_status" class="form-label fw-bold">Expiry Status <span class="text-danger">*</span></label>
               <select class="form-select" id="expiry_status" name="expiry_status" required>
                 <option value="">Select...</option>
-                <option value="valid">Valid</option>
-                <option value="near_expiry">Near Expiry</option>
-                <option value="expired">Expired</option>
+                <option value="valid" {% if existing_data and existing_data.expiry_status == 'valid' %}selected{% endif %}>Valid</option>
+                <option value="near_expiry" {% if existing_data and existing_data.expiry_status == 'near_expiry' %}selected{% endif %}>Near Expiry</option>
+                <option value="expired" {% if existing_data and existing_data.expiry_status == 'expired' %}selected{% endif %}>Expired</option>
               </select>
             </div>
 
@@ -142,9 +154,9 @@
               <label for="label_completeness" class="form-label fw-bold">Label Completeness <span class="text-danger">*</span></label>
               <select class="form-select" id="label_completeness" name="label_completeness" required>
                 <option value="">Select...</option>
-                <option value="complete">Complete</option>
-                <option value="partial">Partial</option>
-                <option value="missing">Missing</option>
+                <option value="complete" {% if existing_data and existing_data.label_completeness == 'complete' %}selected{% endif %}>Complete</option>
+                <option value="partial" {% if existing_data and existing_data.label_completeness == 'partial' %}selected{% endif %}>Partial</option>
+                <option value="missing" {% if existing_data and existing_data.label_completeness == 'missing' %}selected{% endif %}>Missing</option>
               </select>
             </div>
 
@@ -152,11 +164,13 @@
               <label class="form-label fw-bold">Dosage Label Matches Expected? <span class="text-danger">*</span></label>
               <div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="dosage_label_matches_expected" id="dosage_yes" value="1" required>
+                  <input class="form-check-input" type="radio" name="dosage_label_matches_expected" id="dosage_yes" value="1" required
+                    {% if existing_data and existing_data.dosage_label_matches_expected == 1 %}checked{% endif %}>
                   <label class="form-check-label" for="dosage_yes">Yes</label>
                 </div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="dosage_label_matches_expected" id="dosage_no" value="0">
+                  <input class="form-check-input" type="radio" name="dosage_label_matches_expected" id="dosage_no" value="0"
+                    {% if existing_data and existing_data.dosage_label_matches_expected == 0 %}checked{% endif %}>
                   <label class="form-check-label" for="dosage_no">No</label>
                 </div>
               </div>
@@ -166,11 +180,13 @@
               <label class="form-label fw-bold">Physical Anomalies Present? <span class="text-danger">*</span></label>
               <div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="physical_anomalies_present" id="anomalies_yes" value="1" required>
+                  <input class="form-check-input" type="radio" name="physical_anomalies_present" id="anomalies_yes" value="1" required
+                    {% if existing_data and existing_data.physical_anomalies_present == 1 %}checked{% endif %}>
                   <label class="form-check-label" for="anomalies_yes">Yes</label>
                 </div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="physical_anomalies_present" id="anomalies_no" value="0">
+                  <input class="form-check-input" type="radio" name="physical_anomalies_present" id="anomalies_no" value="0"
+                    {% if existing_data and existing_data.physical_anomalies_present == 0 %}checked{% endif %}>
                   <label class="form-check-label" for="anomalies_no">No</label>
                 </div>
               </div>
@@ -178,7 +194,7 @@
 
             <div class="mb-3">
               <label for="evidence_photos" class="form-label fw-bold">Evidence Photos URL (Optional)</label>
-              <input type="text" class="form-control" id="evidence_photos" name="evidence_photos" placeholder="URL to photos">
+              <input type="text" class="form-control" id="evidence_photos" name="evidence_photos" placeholder="URL to photos" value="{% if existing_data %}{{ existing_data.evidence_photos }}{% endif %}">
             </div>
 
             {% elif category == 'food' %}
@@ -189,11 +205,13 @@
               <label class="form-label fw-bold">Packaging Intact? <span class="text-danger">*</span></label>
               <div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="packaging_intact" id="pkg_intact_yes" value="1" required>
+                  <input class="form-check-input" type="radio" name="packaging_intact" id="pkg_intact_yes" value="1" required
+                    {% if existing_data and existing_data.packaging_intact == 1 %}checked{% endif %}>
                   <label class="form-check-label" for="pkg_intact_yes">Yes</label>
                 </div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="packaging_intact" id="pkg_intact_no" value="0">
+                  <input class="form-check-input" type="radio" name="packaging_intact" id="pkg_intact_no" value="0"
+                    {% if existing_data and existing_data.packaging_intact == 0 %}checked{% endif %}>
                   <label class="form-check-label" for="pkg_intact_no">No</label>
                 </div>
               </div>
@@ -203,10 +221,10 @@
               <label for="expiry_status" class="form-label fw-bold">Expiry Status <span class="text-danger">*</span></label>
               <select class="form-select" id="expiry_status" name="expiry_status" required>
                 <option value="">Select...</option>
-                <option value="valid">Valid</option>
-                <option value="near_expiry">Near Expiry</option>
-                <option value="expired">Expired</option>
-                <option value="missing">Missing</option>
+                <option value="valid" {% if existing_data and existing_data.expiry_status == 'valid' %}selected{% endif %}>Valid</option>
+                <option value="near_expiry" {% if existing_data and existing_data.expiry_status == 'near_expiry' %}selected{% endif %}>Near Expiry</option>
+                <option value="expired" {% if existing_data and existing_data.expiry_status == 'expired' %}selected{% endif %}>Expired</option>
+                <option value="missing" {% if existing_data and existing_data.expiry_status == 'missing' %}selected{% endif %}>Missing</option>
               </select>
             </div>
 
@@ -214,11 +232,13 @@
               <label class="form-label fw-bold">Weight/Volume Matches Label? <span class="text-danger">*</span></label>
               <div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="weight_or_volume_matches_label" id="weight_yes" value="1" required>
+                  <input class="form-check-input" type="radio" name="weight_or_volume_matches_label" id="weight_yes" value="1" required
+                    {% if existing_data and existing_data.weight_or_volume_matches_label == 1 %}checked{% endif %}>
                   <label class="form-check-label" for="weight_yes">Yes</label>
                 </div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="weight_or_volume_matches_label" id="weight_no" value="0">
+                  <input class="form-check-input" type="radio" name="weight_or_volume_matches_label" id="weight_no" value="0"
+                    {% if existing_data and existing_data.weight_or_volume_matches_label == 0 %}checked{% endif %}>
                   <label class="form-check-label" for="weight_no">No</label>
                 </div>
               </div>
@@ -228,11 +248,13 @@
               <label class="form-label fw-bold">Visible Spoilage Present? <span class="text-danger">*</span></label>
               <div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="visible_spoilage_present" id="spoilage_yes" value="1" required>
+                  <input class="form-check-input" type="radio" name="visible_spoilage_present" id="spoilage_yes" value="1" required
+                    {% if existing_data and existing_data.visible_spoilage_present == 1 %}checked{% endif %}>
                   <label class="form-check-label" for="spoilage_yes">Yes</label>
                 </div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="visible_spoilage_present" id="spoilage_no" value="0">
+                  <input class="form-check-input" type="radio" name="visible_spoilage_present" id="spoilage_no" value="0"
+                    {% if existing_data and existing_data.visible_spoilage_present == 0 %}checked{% endif %}>
                   <label class="form-check-label" for="spoilage_no">No</label>
                 </div>
               </div>
@@ -242,11 +264,13 @@
               <label class="form-label fw-bold">Abnormal Smell or Appearance? <span class="text-danger">*</span></label>
               <div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="abnormal_smell_or_appearance" id="abnormal_yes" value="1" required>
+                  <input class="form-check-input" type="radio" name="abnormal_smell_or_appearance" id="abnormal_yes" value="1" required
+                    {% if existing_data and existing_data.abnormal_smell_or_appearance == 1 %}checked{% endif %}>
                   <label class="form-check-label" for="abnormal_yes">Yes</label>
                 </div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="abnormal_smell_or_appearance" id="abnormal_no" value="0">
+                  <input class="form-check-input" type="radio" name="abnormal_smell_or_appearance" id="abnormal_no" value="0"
+                    {% if existing_data and existing_data.abnormal_smell_or_appearance == 0 %}checked{% endif %}>
                   <label class="form-check-label" for="abnormal_no">No</label>
                 </div>
               </div>
@@ -254,7 +278,7 @@
 
             <div class="mb-3">
               <label for="evidence_photos" class="form-label fw-bold">Evidence Photos URL (Optional)</label>
-              <input type="text" class="form-control" id="evidence_photos" name="evidence_photos" placeholder="URL to photos">
+              <input type="text" class="form-control" id="evidence_photos" name="evidence_photos" placeholder="URL to photos" value="{% if existing_data %}{{ existing_data.evidence_photos }}{% endif %}">
             </div>
 
             {% elif category == 'apparel' %}
@@ -265,9 +289,9 @@
               <label for="material_quality" class="form-label fw-bold">Material Quality <span class="text-danger">*</span></label>
               <select class="form-select" id="material_quality" name="material_quality" required>
                 <option value="">Select...</option>
-                <option value="as_expected">As Expected</option>
-                <option value="below_expected">Below Expected</option>
-                <option value="poor">Poor</option>
+                <option value="as_expected" {% if existing_data and existing_data.material_quality == 'as_expected' %}selected{% endif %}>As Expected</option>
+                <option value="below_expected" {% if existing_data and existing_data.material_quality == 'below_expected' %}selected{% endif %}>Below Expected</option>
+                <option value="poor" {% if existing_data and existing_data.material_quality == 'poor' %}selected{% endif %}>Poor</option>
               </select>
             </div>
 
@@ -275,9 +299,9 @@
               <label for="stitching_quality" class="form-label fw-bold">Stitching Quality <span class="text-danger">*</span></label>
               <select class="form-select" id="stitching_quality" name="stitching_quality" required>
                 <option value="">Select...</option>
-                <option value="intact">Intact</option>
-                <option value="minor_defects">Minor Defects</option>
-                <option value="major_defects">Major Defects</option>
+                <option value="intact" {% if existing_data and existing_data.stitching_quality == 'intact' %}selected{% endif %}>Intact</option>
+                <option value="minor_defects" {% if existing_data and existing_data.stitching_quality == 'minor_defects' %}selected{% endif %}>Minor Defects</option>
+                <option value="major_defects" {% if existing_data and existing_data.stitching_quality == 'major_defects' %}selected{% endif %}>Major Defects</option>
               </select>
             </div>
 
@@ -285,10 +309,10 @@
               <label for="fit_consistency" class="form-label fw-bold">Fit Consistency <span class="text-danger">*</span></label>
               <select class="form-select" id="fit_consistency" name="fit_consistency" required>
                 <option value="">Select...</option>
-                <option value="as_expected">As Expected</option>
-                <option value="tight">Tight</option>
-                <option value="loose">Loose</option>
-                <option value="inconsistent">Inconsistent</option>
+                <option value="as_expected" {% if existing_data and existing_data.fit_consistency == 'as_expected' %}selected{% endif %}>As Expected</option>
+                <option value="tight" {% if existing_data and existing_data.fit_consistency == 'tight' %}selected{% endif %}>Tight</option>
+                <option value="loose" {% if existing_data and existing_data.fit_consistency == 'loose' %}selected{% endif %}>Loose</option>
+                <option value="inconsistent" {% if existing_data and existing_data.fit_consistency == 'inconsistent' %}selected{% endif %}>Inconsistent</option>
               </select>
             </div>
 
@@ -296,11 +320,13 @@
               <label class="form-label fw-bold">Early Wear Present? <span class="text-danger">*</span></label>
               <div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="early_wear_present" id="wear_yes" value="1" required>
+                  <input class="form-check-input" type="radio" name="early_wear_present" id="wear_yes" value="1" required
+                    {% if existing_data and existing_data.early_wear_present == 1 %}checked{% endif %}>
                   <label class="form-check-label" for="wear_yes">Yes</label>
                 </div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="early_wear_present" id="wear_no" value="0">
+                  <input class="form-check-input" type="radio" name="early_wear_present" id="wear_no" value="0"
+                    {% if existing_data and existing_data.early_wear_present == 0 %}checked{% endif %}>
                   <label class="form-check-label" for="wear_no">No</label>
                 </div>
               </div>
@@ -310,11 +336,13 @@
               <label class="form-label fw-bold">Color or Print Fading? <span class="text-danger">*</span></label>
               <div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="color_or_print_fading" id="fading_yes" value="1" required>
+                  <input class="form-check-input" type="radio" name="color_or_print_fading" id="fading_yes" value="1" required
+                    {% if existing_data and existing_data.color_or_print_fading == 1 %}checked{% endif %}>
                   <label class="form-check-label" for="fading_yes">Yes</label>
                 </div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="color_or_print_fading" id="fading_no" value="0">
+                  <input class="form-check-input" type="radio" name="color_or_print_fading" id="fading_no" value="0"
+                    {% if existing_data and existing_data.color_or_print_fading == 0 %}checked{% endif %}>
                   <label class="form-check-label" for="fading_no">No</label>
                 </div>
               </div>
@@ -322,14 +350,14 @@
 
             <div class="mb-3">
               <label for="evidence_photos" class="form-label fw-bold">Evidence Photos URL (Optional)</label>
-              <input type="text" class="form-control" id="evidence_photos" name="evidence_photos" placeholder="URL to photos">
+              <input type="text" class="form-control" id="evidence_photos" name="evidence_photos" placeholder="URL to photos" value="{% if existing_data %}{{ existing_data.evidence_photos }}{% endif %}">
             </div>
 
             {% endif %}
 
             <!-- Submit Button -->
             <div class="d-grid gap-2 mt-4">
-              <button type="submit" class="btn btn-primary btn-lg">Submit Quality Report</button>
+              <button type="submit" class="btn btn-primary btn-lg">{% if is_update %}Update Quality Report{% else %}Submit Quality Report{% endif %}</button>
               <a href="/user/price_reports" class="btn btn-outline-secondary">Cancel</a>
             </div>
           </form>
