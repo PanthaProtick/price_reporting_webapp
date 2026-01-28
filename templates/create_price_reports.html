@@ -1,0 +1,144 @@
+{% extends "layout.html" %}
+
+{% block title %}Create Price Report{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <h1 class="mb-4">Report a Price</h1>
+    
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <form method="post" id="price-report-form">
+          
+          <!-- Shop Selection -->
+          <div class="mb-4">
+            <label for="shop_id" class="form-label fw-bold">Select Shop</label>
+            <select class="form-select" id="shop_id" name="shop_id" required>
+              <option value="">-- Choose a shop --</option>
+              {% for shop in shops %}
+              <option value="{{ shop.id }}">{{ shop.name }} - {{ shop.address }}</option>
+              {% endfor %}
+            </select>
+            <div class="form-text">Select the shop where you made the purchase</div>
+          </div>
+
+          <!-- Product Alias Selection -->
+          <div class="mb-4">
+            <label for="product_alias_id" class="form-label fw-bold">Select Product</label>
+            <select class="form-select" id="product_alias_id" name="product_alias_id" required>
+              <option value="">-- Choose a product --</option>
+              {% for alias in product_aliases %}
+              <option value="{{ alias.id }}" data-category="{{ alias.category }}">
+                {{ alias.alias_name }} ({{ alias.canonical_name }})
+                <span class="badge bg-secondary">{{ alias.category }}</span>
+              </option>
+              {% endfor %}
+            </select>
+            <div class="form-text">Select the product you purchased</div>
+          </div>
+
+          <!-- Price Paid -->
+          <div class="mb-4">
+            <label for="price_paid" class="form-label fw-bold">Price Paid</label>
+            <div class="input-group">
+              <span class="input-group-text">৳</span>
+              <input 
+                type="number" 
+                class="form-control" 
+                id="price_paid" 
+                name="price_paid" 
+                step="0.01" 
+                min="0.01" 
+                placeholder="0.00"
+                required>
+            </div>
+            <div class="form-text">Enter the total price you paid</div>
+          </div>
+
+          <!-- Quantity -->
+          <div class="mb-4">
+            <label for="quantity" class="form-label fw-bold">Quantity</label>
+            <input 
+              type="number" 
+              class="form-control" 
+              id="quantity" 
+              name="quantity" 
+              min="1" 
+              value="1"
+              required>
+            <div class="form-text">Number of items purchased</div>
+          </div>
+
+          <!-- Unit Price Display (calculated) -->
+          <div class="mb-4">
+            <div class="alert alert-info" role="alert">
+              <strong>Unit Price:</strong> <span id="unit-price">৳0.00</span>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary btn-lg">Submit Price Report</button>
+            <a href="/" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Help Text -->
+    <div class="mt-4">
+      <div class="card border-info">
+        <div class="card-header bg-info text-white">
+          <strong>How to Report a Price</strong>
+        </div>
+        <div class="card-body">
+          <ol class="mb-0">
+            <li>Select the shop where you made your purchase</li>
+            <li>Choose the product from the dropdown list</li>
+            <li>Enter the exact price you paid</li>
+            <li>Specify how many items you bought</li>
+            <li>Review the unit price and submit</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Calculate and display unit price
+  const priceInput = document.getElementById('price_paid');
+  const quantityInput = document.getElementById('quantity');
+  const unitPriceDisplay = document.getElementById('unit-price');
+
+  function updateUnitPrice() {
+    const price = parseFloat(priceInput.value) || 0;
+    const quantity = parseInt(quantityInput.value) || 1;
+    const unitPrice = quantity > 0 ? (price / quantity) : 0;
+    unitPriceDisplay.textContent = '৳' + unitPrice.toFixed(2);
+  }
+
+  priceInput.addEventListener('input', updateUnitPrice);
+  quantityInput.addEventListener('input', updateUnitPrice);
+
+  // Form validation
+  document.getElementById('price-report-form').addEventListener('submit', function(e) {
+    const price = parseFloat(priceInput.value);
+    const quantity = parseInt(quantityInput.value);
+
+    if (price <= 0) {
+      e.preventDefault();
+      alert('Price must be greater than zero');
+      return false;
+    }
+
+    if (quantity <= 0) {
+      e.preventDefault();
+      alert('Quantity must be at least 1');
+      return false;
+    }
+  });
+</script>
+
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends "layout.html" %}
+
+{% block title %}My Price Reports{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>My Price Reports</h1>
+    <a href="/create/price_report" class="btn btn-primary">
+      <i class="bi bi-plus-circle"></i> New Report
+    </a>
+  </div>
+
+  {% if price_reports %}
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover table-striped align-middle">
+          <thead class="table-dark">
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Product</th>
+              <th scope="col">Shop</th>
+              <th scope="col">Category</th>
+              <th scope="col">Quantity</th>
+              <th scope="col">Price Paid</th>
+              <th scope="col">Unit Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for report in price_reports %}
+            <tr>
+              <td>{{ loop.index }}</td>
+              <td>
+                <strong>{{ report.alias_name }}</strong>
+                <br>
+                <small class="text-muted">{{ report.canonical_name }}</small>
+              </td>
+              <td>{{ report.shop_name }}</td>
+              <td>
+                <span class="badge 
+                  {% if report.category == 'electronics' %}bg-primary
+                  {% elif report.category == 'pharma' %}bg-success
+                  {% elif report.category == 'apparel' %}bg-warning
+                  {% elif report.category == 'food' %}bg-info
+                  {% else %}bg-secondary
+                  {% endif %}">
+                  {{ report.category|capitalize }}
+                </span>
+              </td>
+              <td>{{ report.quantity }}</td>
+              <td class="fw-bold">৳{{ "%.2f"|format(report.price_paid) }}</td>
+              <td class="text-muted">৳{{ "%.2f"|format(report.price_paid / report.quantity) }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary Statistics -->
+  <div class="row mt-4">
+    <div class="col-md-4">
+      <div class="card text-center border-primary">
+        <div class="card-body">
+          <h5 class="card-title text-primary">Total Reports</h5>
+          <p class="display-6">{{ price_reports|length }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-center border-success">
+        <div class="card-body">
+          <h5 class="card-title text-success">Total Spent</h5>
+          <p class="display-6">৳{{ "%.2f"|format(price_reports|sum(attribute='price_paid')) }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-center border-info">
+        <div class="card-body">
+          <h5 class="card-title text-info">Total Items</h5>
+          <p class="display-6">{{ price_reports|sum(attribute='quantity') }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% else %}
+  <!-- Empty State -->
+  <div class="card shadow-sm">
+    <div class="card-body text-center py-5">
+      <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-receipt text-muted mb-3" viewBox="0 0 16 16">
+        <path d="M1.92.506a.5.5 0 0 1 .434.14L3 1.293l.646-.647a.5.5 0 0 1 .708 0L5 1.293l.646-.647a.5.5 0 0 1 .708 0L7 1.293l.646-.647a.5.5 0 0 1 .708 0L9 1.293l.646-.647a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .801.13l.5 1A.5.5 0 0 1 15 2v12a.5.5 0 0 1-.053.224l-.5 1a.5.5 0 0 1-.8.13L13 14.707l-.646.647a.5.5 0 0 1-.708 0L11 14.707l-.646.647a.5.5 0 0 1-.708 0L9 14.707l-.646.647a.5.5 0 0 1-.708 0L7 14.707l-.646.647a.5.5 0 0 1-.708 0L5 14.707l-.646.647a.5.5 0 0 1-.708 0L3 14.707l-.646.647a.5.5 0 0 1-.801-.13l-.5-1A.5.5 0 0 1 1 14V2a.5.5 0 0 1 .053-.224l.5-1a.5.5 0 0 1 .367-.27m.217 1.338L2 2.118v11.764l.137.274.51-.51a.5.5 0 0 1 .707 0l.646.647.646-.646a.5.5 0 0 1 .708 0l.646.646.646-.646a.5.5 0 0 1 .708 0l.646.646.646-.646a.5.5 0 0 1 .708 0l.646.646.646-.646a.5.5 0 0 1 .708 0l.646.646.646-.646a.5.5 0 0 1 .708 0l.509.509.137-.274V2.118l-.137-.274-.51.51a.5.5 0 0 1-.707 0L12 1.707l-.646.647a.5.5 0 0 1-.708 0L10 1.707l-.646.647a.5.5 0 0 1-.708 0L8 1.707l-.646.647a.5.5 0 0 1-.708 0L6 1.707l-.646.647a.5.5 0 0 1-.708 0L4 1.707l-.646.647a.5.5 0 0 1-.708 0z"/>
+        <path d="M3 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 1 1 0 1h-6a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h6a.5.5 0 1 1 0 1h-6a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h6a.5.5 0 1 1 0 1h-6a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5m8-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5"/>
+      </svg>
+      <h3 class="text-muted">No Price Reports Yet</h3>
+      <p class="text-muted">You haven't submitted any price reports. Start contributing to help others make informed decisions!</p>
+      <a href="/create/price_report" class="btn btn-primary btn-lg mt-3">
+        <i class="bi bi-plus-circle"></i> Create Your First Report
+      </a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
