@@ -1,0 +1,345 @@
+{% extends "layout.html" %}
+
+{% block title %}Create Quality Report{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <h1 class="mb-4">Report Product Quality</h1>
+      
+      <div class="alert alert-info">
+        <strong>Category:</strong> <span class="badge bg-primary">{{ category|capitalize }}</span>
+        <p class="mb-0 mt-2">Please provide honest feedback about the quality of this product purchase.</p>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <form method="post" id="quality-report-form">
+            
+            {% if category == 'electronics' %}
+            <!-- Electronics Quality Form -->
+            <h5 class="mb-3">Electronics Quality Assessment</h5>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Device Functional? <span class="text-danger">*</span></label>
+              <div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="device_functional" id="functional_yes" value="1" required>
+                  <label class="form-check-label" for="functional_yes">Yes</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="device_functional" id="functional_no" value="0">
+                  <label class="form-check-label" for="functional_no">No</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="authenticity_confidence" class="form-label fw-bold">Authenticity Confidence (1-5) <span class="text-danger">*</span></label>
+              <select class="form-select" id="authenticity_confidence" name="authenticity_confidence" required>
+                <option value="">Select...</option>
+                <option value="1">1 - Definitely Counterfeit</option>
+                <option value="2">2 - Likely Counterfeit</option>
+                <option value="3">3 - Uncertain</option>
+                <option value="4">4 - Likely Authentic</option>
+                <option value="5">5 - Definitely Authentic</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label for="condition_match" class="form-label fw-bold">Condition Match Expectation (1-5) <span class="text-danger">*</span></label>
+              <select class="form-select" id="condition_match" name="condition_match" required>
+                <option value="">Select...</option>
+                <option value="1">1 - Much Worse</option>
+                <option value="2">2 - Worse</option>
+                <option value="3">3 - As Expected</option>
+                <option value="4">4 - Better</option>
+                <option value="5">5 - Much Better</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Warranty Honored?</label>
+              <div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="warranty_honored" id="warranty_yes" value="1">
+                  <label class="form-check-label" for="warranty_yes">Yes</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="warranty_honored" id="warranty_no" value="0">
+                  <label class="form-check-label" for="warranty_no">No</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="warranty_honored" id="warranty_na" value="" checked>
+                  <label class="form-check-label" for="warranty_na">N/A / Not Tested</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Accessories Complete? <span class="text-danger">*</span></label>
+              <div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="accessories_complete" id="accessories_yes" value="1" required>
+                  <label class="form-check-label" for="accessories_yes">Yes</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="accessories_complete" id="accessories_no" value="0">
+                  <label class="form-check-label" for="accessories_no">No</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="reported_issue" class="form-label fw-bold">Reported Issues (Optional)</label>
+              <textarea class="form-control" id="reported_issue" name="reported_issue" rows="3" placeholder="Describe any issues or defects..."></textarea>
+            </div>
+
+            {% elif category == 'pharma' %}
+            <!-- Pharmaceutical Quality Form -->
+            <h5 class="mb-3">Pharmaceutical Quality Assessment</h5>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Packaging Sealed? <span class="text-danger">*</span></label>
+              <div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="packaging_sealed" id="sealed_yes" value="1" required>
+                  <label class="form-check-label" for="sealed_yes">Yes</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="packaging_sealed" id="sealed_no" value="0">
+                  <label class="form-check-label" for="sealed_no">No</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Expiry Date Present? <span class="text-danger">*</span></label>
+              <div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="expiry_date_present" id="expiry_present_yes" value="1" required>
+                  <label class="form-check-label" for="expiry_present_yes">Yes</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="expiry_date_present" id="expiry_present_no" value="0">
+                  <label class="form-check-label" for="expiry_present_no">No</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="expiry_status" class="form-label fw-bold">Expiry Status <span class="text-danger">*</span></label>
+              <select class="form-select" id="expiry_status" name="expiry_status" required>
+                <option value="">Select...</option>
+                <option value="valid">Valid</option>
+                <option value="near_expiry">Near Expiry</option>
+                <option value="expired">Expired</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label for="label_completeness" class="form-label fw-bold">Label Completeness <span class="text-danger">*</span></label>
+              <select class="form-select" id="label_completeness" name="label_completeness" required>
+                <option value="">Select...</option>
+                <option value="complete">Complete</option>
+                <option value="partial">Partial</option>
+                <option value="missing">Missing</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Dosage Label Matches Expected? <span class="text-danger">*</span></label>
+              <div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="dosage_label_matches_expected" id="dosage_yes" value="1" required>
+                  <label class="form-check-label" for="dosage_yes">Yes</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="dosage_label_matches_expected" id="dosage_no" value="0">
+                  <label class="form-check-label" for="dosage_no">No</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Physical Anomalies Present? <span class="text-danger">*</span></label>
+              <div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="physical_anomalies_present" id="anomalies_yes" value="1" required>
+                  <label class="form-check-label" for="anomalies_yes">Yes</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="physical_anomalies_present" id="anomalies_no" value="0">
+                  <label class="form-check-label" for="anomalies_no">No</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="evidence_photos" class="form-label fw-bold">Evidence Photos URL (Optional)</label>
+              <input type="text" class="form-control" id="evidence_photos" name="evidence_photos" placeholder="URL to photos">
+            </div>
+
+            {% elif category == 'food' %}
+            <!-- Food Quality Form -->
+            <h5 class="mb-3">Food Quality Assessment</h5>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Packaging Intact? <span class="text-danger">*</span></label>
+              <div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="packaging_intact" id="pkg_intact_yes" value="1" required>
+                  <label class="form-check-label" for="pkg_intact_yes">Yes</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="packaging_intact" id="pkg_intact_no" value="0">
+                  <label class="form-check-label" for="pkg_intact_no">No</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="expiry_status" class="form-label fw-bold">Expiry Status <span class="text-danger">*</span></label>
+              <select class="form-select" id="expiry_status" name="expiry_status" required>
+                <option value="">Select...</option>
+                <option value="valid">Valid</option>
+                <option value="near_expiry">Near Expiry</option>
+                <option value="expired">Expired</option>
+                <option value="missing">Missing</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Weight/Volume Matches Label? <span class="text-danger">*</span></label>
+              <div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="weight_or_volume_matches_label" id="weight_yes" value="1" required>
+                  <label class="form-check-label" for="weight_yes">Yes</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="weight_or_volume_matches_label" id="weight_no" value="0">
+                  <label class="form-check-label" for="weight_no">No</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Visible Spoilage Present? <span class="text-danger">*</span></label>
+              <div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="visible_spoilage_present" id="spoilage_yes" value="1" required>
+                  <label class="form-check-label" for="spoilage_yes">Yes</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="visible_spoilage_present" id="spoilage_no" value="0">
+                  <label class="form-check-label" for="spoilage_no">No</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Abnormal Smell or Appearance? <span class="text-danger">*</span></label>
+              <div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="abnormal_smell_or_appearance" id="abnormal_yes" value="1" required>
+                  <label class="form-check-label" for="abnormal_yes">Yes</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="abnormal_smell_or_appearance" id="abnormal_no" value="0">
+                  <label class="form-check-label" for="abnormal_no">No</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="evidence_photos" class="form-label fw-bold">Evidence Photos URL (Optional)</label>
+              <input type="text" class="form-control" id="evidence_photos" name="evidence_photos" placeholder="URL to photos">
+            </div>
+
+            {% elif category == 'apparel' %}
+            <!-- Apparel Quality Form -->
+            <h5 class="mb-3">Apparel Quality Assessment</h5>
+
+            <div class="mb-3">
+              <label for="material_quality" class="form-label fw-bold">Material Quality <span class="text-danger">*</span></label>
+              <select class="form-select" id="material_quality" name="material_quality" required>
+                <option value="">Select...</option>
+                <option value="as_expected">As Expected</option>
+                <option value="below_expected">Below Expected</option>
+                <option value="poor">Poor</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label for="stitching_quality" class="form-label fw-bold">Stitching Quality <span class="text-danger">*</span></label>
+              <select class="form-select" id="stitching_quality" name="stitching_quality" required>
+                <option value="">Select...</option>
+                <option value="intact">Intact</option>
+                <option value="minor_defects">Minor Defects</option>
+                <option value="major_defects">Major Defects</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label for="fit_consistency" class="form-label fw-bold">Fit Consistency <span class="text-danger">*</span></label>
+              <select class="form-select" id="fit_consistency" name="fit_consistency" required>
+                <option value="">Select...</option>
+                <option value="as_expected">As Expected</option>
+                <option value="tight">Tight</option>
+                <option value="loose">Loose</option>
+                <option value="inconsistent">Inconsistent</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Early Wear Present? <span class="text-danger">*</span></label>
+              <div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="early_wear_present" id="wear_yes" value="1" required>
+                  <label class="form-check-label" for="wear_yes">Yes</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="early_wear_present" id="wear_no" value="0">
+                  <label class="form-check-label" for="wear_no">No</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Color or Print Fading? <span class="text-danger">*</span></label>
+              <div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="color_or_print_fading" id="fading_yes" value="1" required>
+                  <label class="form-check-label" for="fading_yes">Yes</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="color_or_print_fading" id="fading_no" value="0">
+                  <label class="form-check-label" for="fading_no">No</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="evidence_photos" class="form-label fw-bold">Evidence Photos URL (Optional)</label>
+              <input type="text" class="form-control" id="evidence_photos" name="evidence_photos" placeholder="URL to photos">
+            </div>
+
+            {% endif %}
+
+            <!-- Submit Button -->
+            <div class="d-grid gap-2 mt-4">
+              <button type="submit" class="btn btn-primary btn-lg">Submit Quality Report</button>
+              <a href="/user/price_reports" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="alert alert-warning mt-3">
+        <strong>Note:</strong> Quality reports help other users make informed decisions. Please be honest and accurate in your assessment.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

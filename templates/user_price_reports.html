@@ -25,6 +25,7 @@
               <th scope="col">Quantity</th>
               <th scope="col">Price Paid</th>
               <th scope="col">Unit Price</th>
+              <th scope="col">Quality Report</th>
             </tr>
           </thead>
           <tbody>
@@ -51,6 +52,17 @@
               <td>{{ report.quantity }}</td>
               <td class="fw-bold">৳{{ "%.2f"|format(report.price_paid) }}</td>
               <td class="text-muted">৳{{ "%.2f"|format(report.price_paid / report.quantity) }}</td>
+              <td>
+                {% if report.quality_report_id %}
+                <span class="badge bg-success">
+                  <i class="bi bi-check-circle"></i> Submitted
+                </span>
+                {% else %}
+                <a href="/create/quality_report/{{ report.id }}" class="btn btn-sm btn-outline-primary">
+                  <i class="bi bi-star"></i> Add Review
+                </a>
+                {% endif %}
+              </td>
             </tr>
             {% endfor %}
           </tbody>

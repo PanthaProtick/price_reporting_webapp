@@ -34,4 +34,3 @@ def index():
 # Register blueprints
 from routes import register_blueprints
 register_blueprints(app)
-
