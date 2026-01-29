@@ -192,10 +192,14 @@ def create_quality_report(price_report_id):
         return apology("Access denied", 403)
 
     # Check if quality report already exists
-    existing_qr = db.execute(
-        "SELECT id FROM quality_reports WHERE price_report_id = ?",
-        price_report_id
-    )
+    try:
+        existing_qr = db.execute(
+            "SELECT id FROM quality_reports WHERE price_report_id = ?",
+            price_report_id
+        )
+    except Exception as e:
+        print(f"Database error checking existing quality report: {e}")
+        return apology("Database error", 500)
     
     category = pr[0]['category']
     is_update = len(existing_qr) > 0
@@ -322,6 +326,12 @@ def process_electronics_quality(price_report_id, category, is_update=False):
                 quality_report_id
             )
             
+            # Update timestamp in quality_reports
+            db.execute(
+                "UPDATE quality_reports SET updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                quality_report_id
+            )
+            
             flash("Quality report updated successfully!")
         else:
             # Insert into quality_reports
@@ -415,6 +425,12 @@ def process_pharma_quality(price_report_id, category, is_update=False):
                 quality_report_id
             )
             
+            # Update timestamp in quality_reports
+            db.execute(
+                "UPDATE quality_reports SET updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                quality_report_id
+            )
+            
             flash("Quality report updated successfully!")
         else:
             db.execute(
@@ -505,6 +521,12 @@ def process_food_quality(price_report_id, category, is_update=False):
                 quality_report_id
             )
             
+            # Update timestamp in quality_reports
+            db.execute(
+                "UPDATE quality_reports SET updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                quality_report_id
+            )
+            
             flash("Quality report updated successfully!")
         else:
             db.execute(
@@ -591,6 +613,12 @@ def process_apparel_quality(price_report_id, category, is_update=False):
                 data['color_or_print_fading'],
                 data['evidence_photos'],
                 quality_score,
+                quality_report_id
+            )
+            
+            # Update timestamp in quality_reports
+            db.execute(
+                "UPDATE quality_reports SET updated_at = CURRENT_TIMESTAMP WHERE id = ?",
                 quality_report_id
             )
             
