@@ -1,8 +1,10 @@
 # CS50-Price
 
+**Video Demo:** [https://youtu.be/uvGds7TKBK8](https://youtu.be/uvGds7TKBK8)
+
 CS50-Price is a crowdsourced web app for collecting and exploring real-world product prices (and optional quality notes) from shops across Bangladesh.
 
-It’s built for “normal people”: log in, submit what you paid, and browse nearby reports on a map.
+It's built for "normal people": log in, submit what you paid, and browse nearby reports on a map.
 
 ## What you can do
 
