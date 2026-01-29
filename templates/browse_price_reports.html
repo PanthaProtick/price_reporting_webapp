@@ -3,7 +3,7 @@
 {% block title %}Browse Price Reports{% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container mt-4">
   <h1 class="mb-4">Browse Price Reports by Location</h1>
   
   <div class="row">
@@ -23,7 +23,7 @@
               <select class="form-select" id="category" required>
                 <option value="">-- Choose Category --</option>
                 {% for cat in categories %}
-                <option value="{{ cat.category }}">{{ cat.category|capitalize }}</option>
+                <option value="{{ cat.category }}" {% if preset_category == cat.category %}selected{% endif %}>{{ cat.category|capitalize }}</option>
                 {% endfor %}
               </select>
             </div>
@@ -701,6 +701,15 @@ document.getElementById('sort-distance').addEventListener('click', function() {
 document.getElementById('sort-price').addEventListener('click', function() {
   allReports.sort((a, b) => a.unit_price - b.unit_price);
   displayResults({ reports: allReports, pagination: { total_reports: allReports.length, total_pages: 1, current_page: 1 } });
+});
+
+// Auto-trigger category selection if preset
+document.addEventListener('DOMContentLoaded', function() {
+  const categorySelect = document.getElementById('category');
+  if (categorySelect.value) {
+    // Category is already selected from preset, trigger the product loading
+    categorySelect.dispatchEvent(new Event('change'));
+  }
 });
 </script>
 {% endblock %}

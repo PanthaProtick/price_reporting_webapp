@@ -1,7 +1,267 @@
 {% extends "layout.html" %}
 
-{% block title %}Home - Price Reporting{% endblock %}
+{% block title %}Dashboard - PriceReporter{% endblock %}
 
 {% block content %}
-<p>Welcome to the Price Reporting app.</p>
+<div class="container-fluid dashboard-container">
+  <!-- Hero Section -->
+  <div class="hero-section text-center py-5 mb-5">
+    <div class="container">
+      <h1 class="display-4 fw-bold mb-3">
+        <i class="bi bi-graph-up-arrow text-primary"></i>
+        Welcome to PriceReporter
+      </h1>
+      <p class="lead text-muted mb-4">Your trusted platform for transparent price information across Bangladesh</p>
+      <div class="d-flex gap-3 justify-content-center flex-wrap">
+        <a href="/browse/price_reports" class="btn btn-primary btn-lg">
+          <i class="bi bi-search"></i> Browse Price Reports
+        </a>
+        <a href="/create/price_report" class="btn btn-outline-primary btn-lg">
+          <i class="bi bi-plus-circle"></i> Submit a Report
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    {% if session.get('user_type') == 'admin' %}
+    <!-- Admin Priority Section -->
+    <div class="row mb-5">
+      {% if pending_shops > 0 or pending_aliases > 0 %}
+      <div class="col-12 mb-4">
+        <div class="alert alert-danger border-0 shadow-sm">
+          <h4 class="alert-heading mb-3">
+            <i class="bi bi-shield-check"></i> Admin Review Panel
+          </h4>
+          <p class="mb-0">You have pending items that require your review and approval.</p>
+        </div>
+      </div>
+      {% endif %}
+      <div class="col-md-6 mb-4">
+        <div class="card shadow-sm border-0 border-start border-5 border-danger hover-lift h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div>
+                <h4 class="card-title mb-2">
+                  <i class="bi bi-shop text-danger"></i> Shop Proposals
+                </h4>
+                <p class="card-text text-muted">Review and approve new shop submissions from the community</p>
+              </div>
+              {% if pending_shops > 0 %}
+              <span class="badge bg-danger fs-5 rounded-pill px-3 py-2">{{ pending_shops }}</span>
+              {% else %}
+              <span class="badge bg-secondary fs-6 rounded-pill">0</span>
+              {% endif %}
+            </div>
+            <div class="mt-4">
+              <a href="/review/shops" class="btn btn-danger w-100">
+                <i class="bi bi-eye-fill me-2"></i>Review Shop Proposals
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card shadow-sm border-0 border-start border-5 border-warning hover-lift h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div>
+                <h4 class="card-title mb-2">
+                  <i class="bi bi-tags text-warning"></i> Product Alias Proposals
+                </h4>
+                <p class="card-text text-muted">Review and approve new product alias suggestions from users</p>
+              </div>
+              {% if pending_aliases > 0 %}
+              <span class="badge bg-warning fs-5 rounded-pill px-3 py-2">{{ pending_aliases }}</span>
+              {% else %}
+              <span class="badge bg-secondary fs-6 rounded-pill">0</span>
+              {% endif %}
+            </div>
+            <div class="mt-4">
+              <a href="/review/product_aliases" class="btn btn-warning w-100">
+                <i class="bi bi-eye-fill me-2"></i>Review Product Aliases
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <hr class="my-5">
+    {% endif %}
+
+    <!-- Quick Actions -->
+    <div class="row mb-5">
+      <div class="col-12 mb-4">
+        <h2 class="section-title"><i class="bi bi-lightning-charge"></i> Quick Actions</h2>
+      </div>
+      <div class="col-md-3 mb-4">
+        <div class="action-card card h-100 shadow-sm border-0 hover-lift">
+          <div class="card-body text-center">
+            <div class="icon-wrapper bg-primary mb-3">
+              <i class="bi bi-tag text-white"></i>
+            </div>
+            <h5 class="card-title">Submit Price</h5>
+            <p class="card-text text-muted">Report prices you've encountered</p>
+            <a href="/create/price_report" class="btn btn-primary btn-sm">Submit Now</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-4">
+        <div class="action-card card h-100 shadow-sm border-0 hover-lift">
+          <div class="card-body text-center">
+            <div class="icon-wrapper bg-success mb-3">
+              <i class="bi bi-search text-white"></i>
+            </div>
+            <h5 class="card-title">Browse Reports</h5>
+            <p class="card-text text-muted">Find prices near your location</p>
+            <a href="/browse/price_reports" class="btn btn-success btn-sm">Browse Now</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-4">
+        <div class="action-card card h-100 shadow-sm border-0 hover-lift">
+          <div class="card-body text-center">
+            <div class="icon-wrapper bg-warning mb-3">
+              <i class="bi bi-shop text-white"></i>
+            </div>
+            <h5 class="card-title">Add Shop</h5>
+            <p class="card-text text-muted">Propose a new shop location</p>
+            <a href="/create/shop" class="btn btn-warning btn-sm">Add Shop</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-4">
+        <div class="action-card card h-100 shadow-sm border-0 hover-lift">
+          <div class="card-body text-center">
+            <div class="icon-wrapper bg-info mb-3">
+              <i class="bi bi-box text-white"></i>
+            </div>
+            <h5 class="card-title">Add Product</h5>
+            <p class="card-text text-muted">Suggest a product alias</p>
+            <a href="/create/product_alias" class="btn btn-info btn-sm">Add Alias</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Product Categories -->
+    <div class="row mb-5">
+      <div class="col-12 mb-4">
+        <h2 class="section-title"><i class="bi bi-grid"></i> Browse by Category</h2>
+      </div>
+      <div class="col-md-3 mb-4">
+        <a href="/browse/price_reports?category=electronics" class="text-decoration-none">
+          <div class="category-card card shadow-sm border-0 hover-lift">
+            <div class="card-body text-center">
+              <i class="bi bi-cpu category-icon text-primary"></i>
+              <h5 class="mt-3">Electronics</h5>
+              <p class="text-muted small">Phones, laptops & more</p>
+            </div>
+          </div>
+        </a>
+      </div>
+      <div class="col-md-3 mb-4">
+        <a href="/browse/price_reports?category=pharma" class="text-decoration-none">
+          <div class="category-card card shadow-sm border-0 hover-lift">
+            <div class="card-body text-center">
+              <i class="bi bi-heart-pulse category-icon text-danger"></i>
+              <h5 class="mt-3">Pharma</h5>
+              <p class="text-muted small">Medicines & healthcare</p>
+            </div>
+          </div>
+        </a>
+      </div>
+      <div class="col-md-3 mb-4">
+        <a href="/browse/price_reports?category=food" class="text-decoration-none">
+          <div class="category-card card shadow-sm border-0 hover-lift">
+            <div class="card-body text-center">
+              <i class="bi bi-basket category-icon text-success"></i>
+              <h5 class="mt-3">Food</h5>
+              <p class="text-muted small">Groceries & essentials</p>
+            </div>
+          </div>
+        </a>
+      </div>
+      <div class="col-md-3 mb-4">
+        <a href="/browse/price_reports?category=apparel" class="text-decoration-none">
+          <div class="category-card card shadow-sm border-0 hover-lift">
+            <div class="card-body text-center">
+              <i class="bi bi-bag category-icon text-warning"></i>
+              <h5 class="mt-3">Apparel</h5>
+              <p class="text-muted small">Clothing & accessories</p>
+            </div>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <!-- My Activity -->
+    <div class="row mb-5">
+      <div class="col-12 mb-4">
+        <h2 class="section-title"><i class="bi bi-activity"></i> My Activity</h2>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="stat-card card shadow-sm border-0">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="stat-icon bg-primary-subtle">
+                <i class="bi bi-file-earmark-text text-primary"></i>
+              </div>
+              <div class="ms-3">
+                <h3 class="mb-0">{{ price_report_count }}</h3>
+                <p class="text-muted mb-0">Price Reports</p>
+              </div>
+            </div>
+            <a href="/user/price_reports" class="btn btn-link btn-sm p-0 mt-2">View all <i class="bi bi-arrow-right"></i></a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="stat-card card shadow-sm border-0">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="stat-icon bg-success-subtle">
+                <i class="bi bi-star text-success"></i>
+              </div>
+              <div class="ms-3">
+                <h3 class="mb-0">{{ quality_report_count }}</h3>
+                <p class="text-muted mb-0">Quality Reports</p>
+              </div>
+            </div>
+            <a href="/user/price_reports" class="btn btn-link btn-sm p-0 mt-2">View all <i class="bi bi-arrow-right"></i></a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- How It Works -->
+    <div class="row mb-5">
+      <div class="col-12 mb-4">
+        <h2 class="section-title text-center"><i class="bi bi-question-circle"></i> How It Works</h2>
+      </div>
+      <div class="col-md-4 mb-4">
+        <div class="how-it-works-card text-center">
+          <div class="step-number">1</div>
+          <h5 class="mt-3">Report Prices</h5>
+          <p class="text-muted">Share prices you encounter while shopping</p>
+        </div>
+      </div>
+      <div class="col-md-4 mb-4">
+        <div class="how-it-works-card text-center">
+          <div class="step-number">2</div>
+          <h5 class="mt-3">Add Quality Reviews</h5>
+          <p class="text-muted">Help others by reviewing product quality</p>
+        </div>
+      </div>
+      <div class="col-md-4 mb-4">
+        <div class="how-it-works-card text-center">
+          <div class="step-number">3</div>
+          <h5 class="mt-3">Make Informed Decisions</h5>
+          <p class="text-muted">Browse reports to find the best deals</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

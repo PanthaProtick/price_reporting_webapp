@@ -3,9 +3,14 @@
 {% block title %}Create Product Alias{% endblock %}
 
 {% block content %}
-<h1>Create Product Alias</h1>
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <h1 class="mb-4"><i class="bi bi-tags"></i> Create Product Alias</h1>
 
-<form method="post" id="alias-form">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <form method="post" id="alias-form">
   <div class="mb-3">
     <label for="category" class="form-label">Product category</label>
     <select id="category" name="category" class="form-select" required>
@@ -32,8 +37,13 @@
     <input type="text" id="alias_name" name="alias_name" class="form-control" required>
   </div>
 
-  <button type="submit" class="btn btn-primary">Submit Alias</button>
-</form>
+            <button type="submit" class="btn btn-primary">Submit Alias</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
   // Filter canonical products by selected category

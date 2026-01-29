@@ -40,6 +40,8 @@ def login():
 
         # Remember which user has logged in
         session["user_id"] = rows[0]["id"]
+        session["username"] = rows[0]["username"]
+        session["user_type"] = rows[0]["user_type"]
 
         # Redirect user to home page
         return redirect("/")

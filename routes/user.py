@@ -662,12 +662,19 @@ def process_apparel_quality(price_report_id, category, is_update=False):
 @login_required
 def browse_price_reports():
     """Render the browse price reports page with filters"""
+    from flask import request
     try:
         # Get all categories for initial filter
         categories = db.execute(
             "SELECT DISTINCT category FROM products ORDER BY category"
         )
-        return render_template("browse_price_reports.html", categories=categories)
+        
+        # Check if category is preset from URL parameter
+        preset_category = request.args.get('category', '')
+        
+        return render_template("browse_price_reports.html", 
+                             categories=categories,
+                             preset_category=preset_category)
     except Exception as e:
         print(f"Database error: {e}")
         return apology("Failed to load browse page", 500)
