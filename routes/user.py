@@ -656,4 +656,158 @@ def process_apparel_quality(price_report_id, category, is_update=False):
     except Exception as e:
         print(f"Database error: {e}")
         return apology("Failed to create quality report", 500)
-    
+
+
+@user_bp.route("/browse/price_reports", methods=["GET"])
+@login_required
+def browse_price_reports():
+    """Render the browse price reports page with filters"""
+    try:
+        # Get all categories for initial filter
+        categories = db.execute(
+            "SELECT DISTINCT category FROM products ORDER BY category"
+        )
+        return render_template("browse_price_reports.html", categories=categories)
+    except Exception as e:
+        print(f"Database error: {e}")
+        return apology("Failed to load browse page", 500)
+
+
+@user_bp.route("/api/product_aliases/<category>", methods=["GET"])
+@login_required
+def get_product_aliases_by_category(category):
+    """API endpoint to get product aliases for a specific category"""
+    try:
+        aliases = db.execute(
+            "SELECT pa.id, pa.alias_name, p.canonical_name "
+            "FROM product_aliases pa "
+            "JOIN products p ON pa.product_id = p.id "
+            "WHERE p.category = ? "
+            "ORDER BY p.canonical_name, pa.alias_name",
+            category
+        )
+        return {"aliases": aliases}
+    except Exception as e:
+        print(f"Database error: {e}")
+        return {"error": "Failed to load product aliases"}, 500
+
+
+@user_bp.route("/api/search/price_reports", methods=["POST"])
+@login_required
+def search_price_reports():
+    """API endpoint to search price reports by location and filters with pagination"""
+    try:
+        # Get JSON data from request
+        data = request.get_json()
+        
+        product_alias_id = data.get('product_alias_id')
+        user_lat = data.get('latitude')
+        user_lon = data.get('longitude')
+        max_distance = data.get('distance', 10)  # Default 10km
+        page = data.get('page', 1)
+        per_page = data.get('per_page', 10)
+        
+        # Validate inputs
+        if not product_alias_id:
+            return {"error": "Product alias is required"}, 400
+        if not user_lat or not user_lon:
+            return {"error": "Location is required"}, 400
+        
+        try:
+            product_alias_id = int(product_alias_id)
+            user_lat = float(user_lat)
+            user_lon = float(user_lon)
+            max_distance = float(max_distance)
+            page = int(page)
+            per_page = int(per_page)
+        except (ValueError, TypeError):
+            return {"error": "Invalid input data"}, 400
+        
+        if max_distance <= 0 or max_distance > 100:
+            return {"error": "Distance must be between 0 and 100 km"}, 400
+        
+        if page < 1:
+            page = 1
+        if per_page < 1 or per_page > 50:
+            per_page = 10
+        
+        offset = (page - 1) * per_page
+        
+        # Get all price reports for the selected product alias
+        all_reports = db.execute(
+            "SELECT pr.id, pr.price_paid, pr.quantity, pr.reported_at, "
+            "s.id AS shop_id, s.name AS shop_name, s.address, s.latitude, s.longitude, "
+            "pa.alias_name, p.canonical_name, p.category, "
+            "u.username, "
+            "qr.id AS quality_report_id "
+            "FROM price_reports pr "
+            "JOIN shops s ON pr.shop_id = s.id "
+            "JOIN product_aliases pa ON pr.product_alias_id = pa.id "
+            "JOIN products p ON pa.product_id = p.id "
+            "JOIN users u ON pr.user_id = u.id "
+            "LEFT JOIN quality_reports qr ON qr.price_report_id = pr.id "
+            "WHERE pa.id = ? "
+            "ORDER BY pr.reported_at DESC",
+            product_alias_id
+        )
+        
+        # Calculate distance and filter
+        import math
+        
+        def haversine_distance(lat1, lon1, lat2, lon2):
+            """Calculate distance between two points in kilometers using Haversine formula"""
+            R = 6371  # Earth's radius in kilometers
+            
+            lat1_rad = math.radians(lat1)
+            lat2_rad = math.radians(lat2)
+            delta_lat = math.radians(lat2 - lat1)
+            delta_lon = math.radians(lon2 - lon1)
+            
+            a = math.sin(delta_lat / 2) ** 2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(delta_lon / 2) ** 2
+            c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+            
+            return R * c
+        
+        # Filter by distance and add distance to each report
+        filtered_reports = []
+        for report in all_reports:
+            distance = haversine_distance(user_lat, user_lon, report['latitude'], report['longitude'])
+            if distance <= max_distance:
+                report['distance'] = round(distance, 2)
+                report['unit_price'] = round(report['price_paid'] / report['quantity'], 2)
+                filtered_reports.append(report)
+        
+        # Sort by distance (closest first)
+        filtered_reports.sort(key=lambda x: x['distance'])
+        
+        # Calculate pagination
+        total_reports = len(filtered_reports)
+        total_pages = math.ceil(total_reports / per_page) if total_reports > 0 else 1
+        
+        # Get paginated slice
+        paginated_reports = filtered_reports[offset:offset + per_page]
+        
+        return {
+            "success": True,
+            "reports": paginated_reports,
+            "pagination": {
+                "current_page": page,
+                "per_page": per_page,
+                "total_reports": total_reports,
+                "total_pages": total_pages,
+                "has_next": page < total_pages,
+                "has_prev": page > 1
+            },
+            "filters": {
+                "product_alias_id": product_alias_id,
+                "max_distance": max_distance,
+                "user_location": {
+                    "latitude": user_lat,
+                    "longitude": user_lon
+                }
+            }
+        }
+        
+    except Exception as e:
+        print(f"Error in search_price_reports: {e}")
+        return {"error": "Failed to search price reports"}, 500

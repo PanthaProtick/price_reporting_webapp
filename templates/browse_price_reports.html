@@ -1,0 +1,529 @@
+{% extends "layout.html" %}
+
+{% block title %}Browse Price Reports{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1 class="mb-4">Browse Price Reports by Location</h1>
+  
+  <div class="row">
+    <!-- Filter Panel -->
+    <div class="col-lg-4 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0"><i class="bi bi-funnel"></i> Search Filters</h5>
+        </div>
+        <div class="card-body">
+          <form id="filter-form">
+            <!-- Step 1: Category Selection -->
+            <div class="mb-3" id="step-category">
+              <label for="category" class="form-label fw-bold">
+                1. Select Category <span class="text-danger">*</span>
+              </label>
+              <select class="form-select" id="category" required>
+                <option value="">-- Choose Category --</option>
+                {% for cat in categories %}
+                <option value="{{ cat.category }}">{{ cat.category|capitalize }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- Step 2: Product Alias Selection -->
+            <div class="mb-3" id="step-product" style="display: none;">
+              <label for="product_alias" class="form-label fw-bold">
+                2. Select Product <span class="text-danger">*</span>
+              </label>
+              <select class="form-select" id="product_alias" required disabled>
+                <option value="">-- Loading... --</option>
+              </select>
+              <small class="text-muted d-block mt-1" id="product-info"></small>
+            </div>
+
+            <!-- Step 3: Location Selection -->
+            <div class="mb-3" id="step-location" style="display: none;">
+              <label class="form-label fw-bold">
+                3. Set Your Location <span class="text-danger">*</span>
+              </label>
+              <div class="mb-2">
+                <button type="button" class="btn btn-sm btn-outline-primary w-100" id="detect-location">
+                  <i class="bi bi-geo-alt-fill"></i> Use Current Location
+                </button>
+              </div>
+              <div id="map" style="height: 300px; border-radius: 8px; border: 2px solid #dee2e6;"></div>
+              <small class="text-muted d-block mt-2">Click on the map to set your location</small>
+              <div class="mt-2">
+                <input type="number" class="form-control form-control-sm mb-1" id="latitude" step="any" placeholder="Latitude" readonly>
+                <input type="number" class="form-control form-control-sm" id="longitude" step="any" placeholder="Longitude" readonly>
+              </div>
+            </div>
+
+            <!-- Step 4: Distance Filter -->
+            <div class="mb-3" id="step-distance" style="display: none;">
+              <label for="distance" class="form-label fw-bold">
+                4. Maximum Distance (km)
+              </label>
+              <input type="range" class="form-range" id="distance" min="1" max="50" step="1" value="10">
+              <div class="d-flex justify-content-between">
+                <small class="text-muted">1 km</small>
+                <strong id="distance-value">10 km</strong>
+                <small class="text-muted">50 km</small>
+              </div>
+            </div>
+
+            <!-- Search Button -->
+            <div id="search-section" style="display: none;">
+              <button type="submit" class="btn btn-primary w-100" id="search-btn">
+                <i class="bi bi-search"></i> Search Price Reports
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Active Filters Summary -->
+      <div class="card shadow-sm mt-3" id="active-filters" style="display: none;">
+        <div class="card-body">
+          <h6 class="card-title">Active Filters</h6>
+          <ul class="list-unstyled mb-0" id="filter-summary">
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Panel -->
+    <div class="col-lg-8">
+      <!-- Welcome Message -->
+      <div class="card shadow-sm" id="welcome-message">
+        <div class="card-body text-center py-5">
+          <i class="bi bi-search text-muted" style="font-size: 4rem;"></i>
+          <h4 class="mt-3">Find Price Reports Near You</h4>
+          <p class="text-muted">
+            Select a category and product, then set your location to discover price reports from nearby shops.
+          </p>
+        </div>
+      </div>
+
+      <!-- Loading Spinner -->
+      <div class="card shadow-sm" id="loading-message" style="display: none;">
+        <div class="card-body text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-3">Searching for price reports...</p>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div id="results-container" style="display: none;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 id="results-count">0 Results Found</h5>
+          <div class="btn-group" role="group">
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="sort-distance">
+              <i class="bi bi-sort-down"></i> Sort by Distance
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="sort-price">
+              <i class="bi bi-sort-numeric-down"></i> Sort by Price
+            </button>
+          </div>
+        </div>
+
+        <!-- Results List -->
+        <div id="results-list"></div>
+
+        <!-- Pagination -->
+        <nav aria-label="Page navigation" id="pagination-container" style="display: none;">
+          <ul class="pagination justify-content-center" id="pagination">
+          </ul>
+        </nav>
+      </div>
+
+      <!-- No Results -->
+      <div class="card shadow-sm" id="no-results" style="display: none;">
+        <div class="card-body text-center py-5">
+          <i class="bi bi-inbox text-muted" style="font-size: 4rem;"></i>
+          <h4 class="mt-3">No Reports Found</h4>
+          <p class="text-muted">
+            No price reports found within <span id="no-results-distance"></span> km of your location.
+            Try increasing the distance or selecting a different product.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Include Leaflet CSS and JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+  .price-report-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .price-report-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .distance-badge {
+    font-size: 0.85rem;
+    padding: 0.25rem 0.5rem;
+  }
+  .quality-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 5px;
+  }
+  .quality-good { background-color: #28a745; }
+  .quality-medium { background-color: #ffc107; }
+  .quality-poor { background-color: #dc3545; }
+  .quality-none { background-color: #6c757d; }
+</style>
+
+<script>
+let map, marker;
+let currentPage = 1;
+let currentFilters = {};
+let allReports = [];
+
+// Initialize map
+function initMap() {
+  // Default to Dhaka, Bangladesh
+  map = L.map('map').setView([23.8103, 90.4125], 12);
+  
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(map);
+  
+  // Add click event to set location
+  map.on('click', function(e) {
+    setLocation(e.latlng.lat, e.latlng.lng);
+  });
+}
+
+// Set location on map
+function setLocation(lat, lng) {
+  if (marker) {
+    map.removeLayer(marker);
+  }
+  
+  marker = L.marker([lat, lng], {
+    draggable: true
+  }).addTo(map);
+  
+  marker.on('dragend', function(e) {
+    const pos = e.target.getLatLng();
+    setLocation(pos.lat, pos.lng);
+  });
+  
+  map.setView([lat, lng], 13);
+  
+  document.getElementById('latitude').value = lat.toFixed(6);
+  document.getElementById('longitude').value = lng.toFixed(6);
+  
+  // Show distance and search section
+  document.getElementById('step-distance').style.display = 'block';
+  document.getElementById('search-section').style.display = 'block';
+}
+
+// Detect current location
+document.getElementById('detect-location').addEventListener('click', function() {
+  if (navigator.geolocation) {
+    this.disabled = true;
+    this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Detecting...';
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLocation(position.coords.latitude, position.coords.longitude);
+        this.disabled = false;
+        this.innerHTML = '<i class="bi bi-geo-alt-fill"></i> Use Current Location';
+      },
+      (error) => {
+        alert('Unable to detect location. Please click on the map to set your location.');
+        this.disabled = false;
+        this.innerHTML = '<i class="bi bi-geo-alt-fill"></i> Use Current Location';
+      }
+    );
+  } else {
+    alert('Geolocation is not supported by your browser.');
+  }
+});
+
+// Category selection
+document.getElementById('category').addEventListener('change', async function() {
+  const category = this.value;
+  
+  if (!category) {
+    document.getElementById('step-product').style.display = 'none';
+    return;
+  }
+  
+  // Show product selection step
+  document.getElementById('step-product').style.display = 'block';
+  const productSelect = document.getElementById('product_alias');
+  productSelect.innerHTML = '<option value="">-- Loading... --</option>';
+  productSelect.disabled = true;
+  
+  try {
+    const response = await fetch(`/api/product_aliases/${category}`);
+    const data = await response.json();
+    
+    if (data.aliases && data.aliases.length > 0) {
+      productSelect.innerHTML = '<option value="">-- Select Product --</option>';
+      data.aliases.forEach(alias => {
+        const option = document.createElement('option');
+        option.value = alias.id;
+        option.textContent = `${alias.alias_name} (${alias.canonical_name})`;
+        option.dataset.canonical = alias.canonical_name;
+        productSelect.appendChild(option);
+      });
+      productSelect.disabled = false;
+    } else {
+      productSelect.innerHTML = '<option value="">No products available</option>';
+    }
+  } catch (error) {
+    console.error('Error loading products:', error);
+    productSelect.innerHTML = '<option value="">Error loading products</option>';
+  }
+});
+
+// Product selection
+document.getElementById('product_alias').addEventListener('change', function() {
+  if (this.value) {
+    const selectedOption = this.options[this.selectedIndex];
+    document.getElementById('product-info').textContent = 
+      `Canonical: ${selectedOption.dataset.canonical}`;
+    
+    // Show location step
+    document.getElementById('step-location').style.display = 'block';
+    
+    // Initialize map if not already done
+    if (!map) {
+      setTimeout(initMap, 100);
+    }
+  } else {
+    document.getElementById('step-location').style.display = 'none';
+    document.getElementById('step-distance').style.display = 'none';
+    document.getElementById('search-section').style.display = 'none';
+  }
+});
+
+// Distance slider
+document.getElementById('distance').addEventListener('input', function() {
+  document.getElementById('distance-value').textContent = this.value + ' km';
+});
+
+// Form submission
+document.getElementById('filter-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  const productAliasId = document.getElementById('product_alias').value;
+  const latitude = document.getElementById('latitude').value;
+  const longitude = document.getElementById('longitude').value;
+  const distance = document.getElementById('distance').value;
+  
+  if (!productAliasId || !latitude || !longitude) {
+    alert('Please complete all required fields');
+    return;
+  }
+  
+  currentFilters = {
+    product_alias_id: productAliasId,
+    latitude: parseFloat(latitude),
+    longitude: parseFloat(longitude),
+    distance: parseFloat(distance),
+    page: 1,
+    per_page: 10
+  };
+  
+  await searchReports();
+});
+
+// Search reports
+async function searchReports(page = 1) {
+  currentFilters.page = page;
+  
+  // Show loading
+  document.getElementById('welcome-message').style.display = 'none';
+  document.getElementById('results-container').style.display = 'none';
+  document.getElementById('no-results').style.display = 'none';
+  document.getElementById('loading-message').style.display = 'block';
+  
+  try {
+    const response = await fetch('/api/search/price_reports', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(currentFilters)
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      allReports = data.reports;
+      displayResults(data);
+      updateFilterSummary();
+    } else {
+      throw new Error(data.error || 'Search failed');
+    }
+  } catch (error) {
+    console.error('Search error:', error);
+    alert('Failed to search price reports. Please try again.');
+    document.getElementById('loading-message').style.display = 'none';
+    document.getElementById('welcome-message').style.display = 'block';
+  }
+}
+
+// Display results
+function displayResults(data) {
+  document.getElementById('loading-message').style.display = 'none';
+  
+  if (data.reports.length === 0) {
+    document.getElementById('no-results').style.display = 'block';
+    document.getElementById('no-results-distance').textContent = currentFilters.distance;
+    return;
+  }
+  
+  document.getElementById('results-container').style.display = 'block';
+  document.getElementById('results-count').textContent = 
+    `${data.pagination.total_reports} Result${data.pagination.total_reports !== 1 ? 's' : ''} Found`;
+  
+  const resultsList = document.getElementById('results-list');
+  resultsList.innerHTML = '';
+  
+  data.reports.forEach(report => {
+    const card = createReportCard(report);
+    resultsList.appendChild(card);
+  });
+  
+  // Display pagination
+  if (data.pagination.total_pages > 1) {
+    displayPagination(data.pagination);
+  } else {
+    document.getElementById('pagination-container').style.display = 'none';
+  }
+}
+
+// Create report card
+function createReportCard(report) {
+  const card = document.createElement('div');
+  card.className = 'card price-report-card mb-3 shadow-sm';
+  
+  const qualityClass = report.quality_report_id ? 'quality-good' : 'quality-none';
+  const qualityText = report.quality_report_id ? 'Quality Verified' : 'No Quality Report';
+  
+  card.innerHTML = `
+    <div class="card-body">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <h5 class="card-title mb-2">
+            ${report.alias_name}
+            <small class="text-muted">(${report.canonical_name})</small>
+          </h5>
+          <p class="mb-1">
+            <i class="bi bi-shop"></i> <strong>${report.shop_name}</strong><br>
+            <small class="text-muted">${report.address}</small>
+          </p>
+          <p class="mb-1">
+            <span class="quality-indicator ${qualityClass}"></span>
+            <small>${qualityText}</small>
+          </p>
+          <p class="mb-0">
+            <small class="text-muted">
+              <i class="bi bi-person"></i> ${report.username} • 
+              <i class="bi bi-clock"></i> ${new Date(report.reported_at).toLocaleDateString()}
+            </small>
+          </p>
+        </div>
+        <div class="col-md-4 text-md-end">
+          <div class="mb-2">
+            <span class="badge bg-primary distance-badge">
+              <i class="bi bi-pin-map"></i> ${report.distance} km away
+            </span>
+          </div>
+          <h4 class="text-primary mb-1">৳${report.unit_price.toFixed(2)}</h4>
+          <small class="text-muted">per unit</small>
+          <p class="mb-0 mt-2">
+            <small>Qty: ${report.quantity} • Total: ৳${report.price_paid.toFixed(2)}</small>
+          </p>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  return card;
+}
+
+// Display pagination
+function displayPagination(pagination) {
+  document.getElementById('pagination-container').style.display = 'block';
+  const paginationEl = document.getElementById('pagination');
+  paginationEl.innerHTML = '';
+  
+  // Previous button
+  const prevLi = document.createElement('li');
+  prevLi.className = `page-item ${!pagination.has_prev ? 'disabled' : ''}`;
+  prevLi.innerHTML = `<a class="page-link" href="#" data-page="${pagination.current_page - 1}">Previous</a>`;
+  paginationEl.appendChild(prevLi);
+  
+  // Page numbers
+  const startPage = Math.max(1, pagination.current_page - 2);
+  const endPage = Math.min(pagination.total_pages, pagination.current_page + 2);
+  
+  for (let i = startPage; i <= endPage; i++) {
+    const li = document.createElement('li');
+    li.className = `page-item ${i === pagination.current_page ? 'active' : ''}`;
+    li.innerHTML = `<a class="page-link" href="#" data-page="${i}">${i}</a>`;
+    paginationEl.appendChild(li);
+  }
+  
+  // Next button
+  const nextLi = document.createElement('li');
+  nextLi.className = `page-item ${!pagination.has_next ? 'disabled' : ''}`;
+  nextLi.innerHTML = `<a class="page-link" href="#" data-page="${pagination.current_page + 1}">Next</a>`;
+  paginationEl.appendChild(nextLi);
+  
+  // Add click handlers
+  paginationEl.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      if (!this.parentElement.classList.contains('disabled') && 
+          !this.parentElement.classList.contains('active')) {
+        const page = parseInt(this.dataset.page);
+        searchReports(page);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
+  });
+}
+
+// Update filter summary
+function updateFilterSummary() {
+  const summary = document.getElementById('filter-summary');
+  const productText = document.getElementById('product_alias').options[
+    document.getElementById('product_alias').selectedIndex
+  ].textContent;
+  
+  summary.innerHTML = `
+    <li><i class="bi bi-box"></i> ${productText}</li>
+    <li><i class="bi bi-pin-map"></i> Within ${currentFilters.distance} km</li>
+    <li><i class="bi bi-geo-alt"></i> ${currentFilters.latitude.toFixed(4)}, ${currentFilters.longitude.toFixed(4)}</li>
+  `;
+  
+  document.getElementById('active-filters').style.display = 'block';
+}
+
+// Sort functionality
+document.getElementById('sort-distance').addEventListener('click', function() {
+  allReports.sort((a, b) => a.distance - b.distance);
+  displayResults({ reports: allReports, pagination: { total_reports: allReports.length, total_pages: 1, current_page: 1 } });
+});
+
+document.getElementById('sort-price').addEventListener('click', function() {
+  allReports.sort((a, b) => a.unit_price - b.unit_price);
+  displayResults({ reports: allReports, pagination: { total_reports: allReports.length, total_pages: 1, current_page: 1 } });
+});
+</script>
+{% endblock %}
