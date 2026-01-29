@@ -58,12 +58,6 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-Initialize the database:
-
-```powershell
-sqlite3 app.db ".read schema.sql"
-```
-
 Run the app:
 
 ```powershell
