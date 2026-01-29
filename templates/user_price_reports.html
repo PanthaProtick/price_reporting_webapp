@@ -23,7 +23,6 @@
               <th scope="col">Shop</th>
               <th scope="col">Category</th>
               <th scope="col">Quantity</th>
-              <th scope="col">Price Paid</th>
               <th scope="col">Unit Price</th>
               <th scope="col">Quality Report</th>
             </tr>
@@ -50,8 +49,7 @@
                 </span>
               </td>
               <td>{{ report.quantity }}</td>
-              <td class="fw-bold">৳{{ "%.2f"|format(report.price_paid) }}</td>
-              <td class="text-muted">৳{{ "%.2f"|format(report.price_paid / report.quantity) }}</td>
+              <td class="fw-bold">৳{{ "%.2f"|format(report.price_paid / report.quantity) }}</td>
               <td>
                 {% if report.quality_report_id %}
                 <a href="/create/quality_report/{{ report.id }}" class="btn btn-sm btn-outline-success">
@@ -73,27 +71,19 @@
 
   <!-- Summary Statistics -->
   <div class="row mt-4">
-    <div class="col-md-4">
+    <div class="col-md-6">
       <div class="card text-center border-primary">
         <div class="card-body">
-          <h5 class="card-title text-primary">Total Reports</h5>
+          <h5 class="card-title text-primary">Total Price Reports</h5>
           <p class="display-6">{{ price_reports|length }}</p>
         </div>
       </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-6">
       <div class="card text-center border-success">
         <div class="card-body">
-          <h5 class="card-title text-success">Total Spent</h5>
-          <p class="display-6">৳{{ "%.2f"|format(price_reports|sum(attribute='price_paid')) }}</p>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card text-center border-info">
-        <div class="card-body">
-          <h5 class="card-title text-info">Total Items</h5>
-          <p class="display-6">{{ price_reports|sum(attribute='quantity') }}</p>
+          <h5 class="card-title text-success">Total Quality Reports</h5>
+          <p class="display-6">{{ price_reports|selectattr('quality_report_id')|list|length }}</p>
         </div>
       </div>
     </div>

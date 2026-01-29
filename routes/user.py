@@ -706,6 +706,7 @@ def search_price_reports():
         max_distance = data.get('distance', 10)  # Default 10km
         page = data.get('page', 1)
         per_page = data.get('per_page', 10)
+        group_by_shop = data.get('group_by_shop', False)  # New parameter
         
         # Validate inputs
         if not product_alias_id:
@@ -733,19 +734,24 @@ def search_price_reports():
         
         offset = (page - 1) * per_page
         
-        # Get all price reports for the selected product alias
+        # Get all price reports for the selected product alias with quality scores
         all_reports = db.execute(
             "SELECT pr.id, pr.price_paid, pr.quantity, pr.reported_at, "
             "s.id AS shop_id, s.name AS shop_name, s.address, s.latitude, s.longitude, "
             "pa.alias_name, p.canonical_name, p.category, "
             "u.username, "
-            "qr.id AS quality_report_id "
+            "qr.id AS quality_report_id, "
+            "COALESCE(eq.normalized_quality_score, pq.normalized_quality_score, fq.normalized_quality_score, aq.normalized_quality_score) AS quality_score "
             "FROM price_reports pr "
             "JOIN shops s ON pr.shop_id = s.id "
             "JOIN product_aliases pa ON pr.product_alias_id = pa.id "
             "JOIN products p ON pa.product_id = p.id "
             "JOIN users u ON pr.user_id = u.id "
             "LEFT JOIN quality_reports qr ON qr.price_report_id = pr.id "
+            "LEFT JOIN electronics_quality_reports eq ON eq.quality_report_id = qr.id "
+            "LEFT JOIN pharma_quality_reports pq ON pq.quality_report_id = qr.id "
+            "LEFT JOIN food_quality_reports fq ON fq.quality_report_id = qr.id "
+            "LEFT JOIN apparel_quality_reports aq ON aq.quality_report_id = qr.id "
             "WHERE pa.id = ? "
             "ORDER BY pr.reported_at DESC",
             product_alias_id
@@ -777,6 +783,10 @@ def search_price_reports():
                 report['unit_price'] = round(report['price_paid'] / report['quantity'], 2)
                 filtered_reports.append(report)
         
+        # Group by shop if requested
+        if group_by_shop:
+            filtered_reports = group_reports_by_shop(filtered_reports)
+        
         # Sort by distance (closest first)
         filtered_reports.sort(key=lambda x: x['distance'])
         
@@ -801,6 +811,7 @@ def search_price_reports():
             "filters": {
                 "product_alias_id": product_alias_id,
                 "max_distance": max_distance,
+                "group_by_shop": group_by_shop,
                 "user_location": {
                     "latitude": user_lat,
                     "longitude": user_lon
@@ -811,3 +822,57 @@ def search_price_reports():
     except Exception as e:
         print(f"Error in search_price_reports: {e}")
         return {"error": "Failed to search price reports"}, 500
+
+
+def group_reports_by_shop(reports):
+    """Group multiple reports from the same shop and calculate statistics"""
+    from collections import defaultdict
+    from datetime import datetime
+    
+    shop_groups = defaultdict(list)
+    
+    # Group reports by shop_id
+    for report in reports:
+        shop_groups[report['shop_id']].append(report)
+    
+    # Create aggregated reports
+    aggregated_reports = []
+    
+    for shop_id, shop_reports in shop_groups.items():
+        # Use the first report as base
+        base_report = shop_reports[0].copy()
+        
+        # Calculate statistics
+        prices = [r['unit_price'] for r in shop_reports]
+        quantities = [r['quantity'] for r in shop_reports]
+        total_paid = [r['price_paid'] for r in shop_reports]
+        quality_count = sum(1 for r in shop_reports if r['quality_report_id'])
+        
+        # Calculate average quality score for reports with quality data
+        quality_scores = [r['quality_score'] for r in shop_reports if r['quality_score'] is not None]
+        avg_quality_score = round(sum(quality_scores) / len(quality_scores), 2) if quality_scores else None
+        
+        # Sort by date to get latest and earliest
+        shop_reports_sorted = sorted(shop_reports, key=lambda x: x['reported_at'])
+        
+        # Aggregate data
+        base_report['report_count'] = len(shop_reports)
+        base_report['avg_unit_price'] = round(sum(prices) / len(prices), 2)
+        base_report['min_unit_price'] = round(min(prices), 2)
+        base_report['max_unit_price'] = round(max(prices), 2)
+        base_report['total_quantity'] = sum(quantities)
+        base_report['total_spent'] = round(sum(total_paid), 2)
+        base_report['quality_report_count'] = quality_count
+        base_report['avg_quality_score'] = avg_quality_score
+        base_report['latest_report_date'] = shop_reports_sorted[-1]['reported_at']
+        base_report['earliest_report_date'] = shop_reports_sorted[0]['reported_at']
+        base_report['reporters'] = list(set(r['username'] for r in shop_reports))
+        base_report['individual_reports'] = shop_reports  # Keep individual reports for details
+        base_report['is_grouped'] = True
+        
+        # Override unit_price with average
+        base_report['unit_price'] = base_report['avg_unit_price']
+        
+        aggregated_reports.append(base_report)
+    
+    return aggregated_reports

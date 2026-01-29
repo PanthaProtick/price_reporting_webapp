@@ -70,6 +70,18 @@
               </div>
             </div>
 
+            <!-- Group by Shop Toggle -->
+            <div class="mb-3" id="step-grouping" style="display: none;">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="group-by-shop">
+                <label class="form-check-label" for="group-by-shop">
+                  <strong>Group by Shop</strong>
+                  <br>
+                  <small class="text-muted">Show aggregated statistics per shop</small>
+                </label>
+              </div>
+            </div>
+
             <!-- Search Button -->
             <div id="search-section" style="display: none;">
               <button type="submit" class="btn btn-primary w-100" id="search-btn">
@@ -179,6 +191,16 @@
   .quality-medium { background-color: #ffc107; }
   .quality-poor { background-color: #dc3545; }
   .quality-none { background-color: #6c757d; }
+  .star-rating {
+    color: #ffc107;
+    font-size: 1rem;
+  }
+  .star-rating .bi-star-fill {
+    color: #ffc107;
+  }
+  .star-rating .bi-star {
+    color: #dee2e6;
+  }
 </style>
 
 <script>
@@ -186,6 +208,32 @@ let map, marker;
 let currentPage = 1;
 let currentFilters = {};
 let allReports = [];
+
+// Convert quality score to star rating
+function getStarRating(score) {
+  if (score === null || score === undefined) return 0;
+  const percentage = score * 100;
+  if (percentage >= 100) return 5;
+  if (percentage >= 80) return 4;
+  if (percentage >= 60) return 3;
+  if (percentage >= 40) return 2;
+  if (percentage >= 20) return 1;
+  return 0;
+}
+
+// Generate star HTML
+function generateStars(stars) {
+  let html = '<span class="star-rating">';
+  for (let i = 1; i <= 5; i++) {
+    if (i <= stars) {
+      html += '<i class="bi bi-star-fill"></i>';
+    } else {
+      html += '<i class="bi bi-star"></i>';
+    }
+  }
+  html += '</span>';
+  return html;
+}
 
 // Initialize map
 function initMap() {
@@ -224,6 +272,7 @@ function setLocation(lat, lng) {
   
   // Show distance and search section
   document.getElementById('step-distance').style.display = 'block';
+  document.getElementById('step-grouping').style.display = 'block';
   document.getElementById('search-section').style.display = 'block';
 }
 
@@ -305,6 +354,7 @@ document.getElementById('product_alias').addEventListener('change', function() {
   } else {
     document.getElementById('step-location').style.display = 'none';
     document.getElementById('step-distance').style.display = 'none';
+    document.getElementById('step-grouping').style.display = 'none';
     document.getElementById('search-section').style.display = 'none';
   }
 });
@@ -333,6 +383,7 @@ document.getElementById('filter-form').addEventListener('submit', async function
     latitude: parseFloat(latitude),
     longitude: parseFloat(longitude),
     distance: parseFloat(distance),
+    group_by_shop: document.getElementById('group-by-shop').checked,
     page: 1,
     per_page: 10
   };
@@ -411,49 +462,175 @@ function createReportCard(report) {
   const card = document.createElement('div');
   card.className = 'card price-report-card mb-3 shadow-sm';
   
-  const qualityClass = report.quality_report_id ? 'quality-good' : 'quality-none';
-  const qualityText = report.quality_report_id ? 'Quality Verified' : 'No Quality Report';
-  
-  card.innerHTML = `
-    <div class="card-body">
-      <div class="row align-items-center">
-        <div class="col-md-8">
-          <h5 class="card-title mb-2">
-            ${report.alias_name}
-            <small class="text-muted">(${report.canonical_name})</small>
-          </h5>
-          <p class="mb-1">
-            <i class="bi bi-shop"></i> <strong>${report.shop_name}</strong><br>
-            <small class="text-muted">${report.address}</small>
-          </p>
-          <p class="mb-1">
-            <span class="quality-indicator ${qualityClass}"></span>
-            <small>${qualityText}</small>
-          </p>
-          <p class="mb-0">
-            <small class="text-muted">
-              <i class="bi bi-person"></i> ${report.username} • 
-              <i class="bi bi-clock"></i> ${new Date(report.reported_at).toLocaleDateString()}
-            </small>
-          </p>
-        </div>
-        <div class="col-md-4 text-md-end">
-          <div class="mb-2">
-            <span class="badge bg-primary distance-badge">
-              <i class="bi bi-pin-map"></i> ${report.distance} km away
-            </span>
+  if (report.is_grouped) {
+    // Grouped view
+    const qualityPercentage = report.report_count > 0 
+      ? Math.round((report.quality_report_count / report.report_count) * 100) 
+      : 0;
+    const priceRange = report.min_unit_price === report.max_unit_price 
+      ? `৳${report.avg_unit_price.toFixed(2)}` 
+      : `৳${report.min_unit_price.toFixed(2)} - ৳${report.max_unit_price.toFixed(2)}`;
+    
+    card.innerHTML = `
+      <div class="card-body">
+        <div class="row align-items-center">
+          <div class="col-md-8">
+            <h5 class="card-title mb-2">
+              ${report.alias_name}
+              <small class="text-muted">(${report.canonical_name})</small>
+            </h5>
+            <p class="mb-1">
+              <i class="bi bi-shop"></i> <strong>${report.shop_name}</strong><br>
+              <small class="text-muted">${report.address}</small><br>
+              <small class="text-muted">
+                <i class="bi bi-geo-alt"></i> ${report.latitude.toFixed(6)}, ${report.longitude.toFixed(6)}
+                <a href="https://www.google.com/maps?q=${report.latitude},${report.longitude}" target="_blank" class="ms-1">
+                  <i class="bi bi-box-arrow-up-right"></i>
+                </a>
+              </small>
+            </p>
+            <div class="mb-2">
+              <span class="badge bg-info text-dark">
+                <i class="bi bi-stack"></i> ${report.report_count} report${report.report_count !== 1 ? 's' : ''}
+              </span>
+              <span class="badge bg-success">
+                <i class="bi bi-shield-check"></i> ${qualityPercentage}% quality verified
+              </span>
+            </div>
+            ${report.avg_quality_score !== null ? `
+            <div class="mb-1">
+              <small class="text-muted">Quality: </small>
+              ${generateStars(getStarRating(report.avg_quality_score))}
+              <small class="text-muted">(${(report.avg_quality_score * 100).toFixed(0)}%)</small>
+            </div>
+            ` : ''}
+            <p class="mb-0">
+              <small class="text-muted">
+                <i class="bi bi-people"></i> ${report.reporters.length} reporter${report.reporters.length !== 1 ? 's' : ''} • 
+                Latest: ${new Date(report.latest_report_date).toLocaleDateString()}
+              </small>
+            </p>
           </div>
-          <h4 class="text-primary mb-1">৳${report.unit_price.toFixed(2)}</h4>
-          <small class="text-muted">per unit</small>
-          <p class="mb-0 mt-2">
-            <small>Qty: ${report.quantity} • Total: ৳${report.price_paid.toFixed(2)}</small>
-          </p>
+          <div class="col-md-4 text-md-end">
+            <div class="mb-2">
+              <span class="badge bg-primary distance-badge">
+                <i class="bi bi-pin-map"></i> ${report.distance} km away
+              </span>
+            </div>
+            <h4 class="text-primary mb-1">${priceRange}</h4>
+            <small class="text-muted">per unit</small>
+            <p class="mb-0 mt-2">
+              <small>Total Qty: ${report.total_quantity}</small>
+            </p>
+            <button class="btn btn-sm btn-outline-primary mt-2" onclick="toggleDetails(${report.shop_id})">
+              <i class="bi bi-list-ul"></i> View Details
+            </button>
+          </div>
+        </div>
+        <div id="details-${report.shop_id}" class="mt-3" style="display: none;">
+          <hr>
+          <h6>Individual Reports:</h6>
+          <div class="table-responsive">
+            <table class="table table-sm table-hover">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Reporter</th>
+                  <th>Qty</th>
+                  <th>Price Paid</th>
+                  <th>Unit Price</th>
+                  <th>Quality</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${report.individual_reports.map(r => `
+                  <tr>
+                    <td>${new Date(r.reported_at).toLocaleDateString()}</td>
+                    <td>${r.username}</td>
+                    <td>${r.quantity}</td>
+                    <td>৳${r.price_paid.toFixed(2)}</td>
+                    <td>৳${r.unit_price.toFixed(2)}</td>
+                    <td>
+                      ${r.quality_score !== null ? generateStars(getStarRating(r.quality_score)) : '<i class="bi bi-dash-circle text-muted"></i>'}
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
-  `;
+    `;
+  } else {
+    // Individual view
+    const qualityClass = report.quality_report_id ? 'quality-good' : 'quality-none';
+    const qualityText = report.quality_report_id ? 'Quality Verified' : 'No Quality Report';
+    
+    card.innerHTML = `
+      <div class="card-body">
+        <div class="row align-items-center">
+          <div class="col-md-8">
+            <h5 class="card-title mb-2">
+              ${report.alias_name}
+              <small class="text-muted">(${report.canonical_name})</small>
+            </h5>
+            <p class="mb-1">
+              <i class="bi bi-shop"></i> <strong>${report.shop_name}</strong><br>
+              <small class="text-muted">${report.address}</small><br>
+              <small class="text-muted">
+                <i class="bi bi-geo-alt"></i> ${report.latitude.toFixed(6)}, ${report.longitude.toFixed(6)}
+                <a href="https://www.google.com/maps?q=${report.latitude},${report.longitude}" target="_blank" class="ms-1">
+                  <i class="bi bi-box-arrow-up-right"></i>
+                </a>
+              </small>
+            </p>
+            <p class="mb-1">
+              <span class="quality-indicator ${qualityClass}"></span>
+              <small>${qualityText}</small>
+              ${report.quality_score !== null ? `
+                <br>${generateStars(getStarRating(report.quality_score))}
+                <small class="text-muted">(${(report.quality_score * 100).toFixed(0)}%)</small>
+              ` : ''}
+            </p>
+            <p class="mb-0">
+              <small class="text-muted">
+                <i class="bi bi-person"></i> ${report.username} • 
+                <i class="bi bi-clock"></i> ${new Date(report.reported_at).toLocaleDateString()}
+              </small>
+            </p>
+          </div>
+          <div class="col-md-4 text-md-end">
+            <div class="mb-2">
+              <span class="badge bg-primary distance-badge">
+                <i class="bi bi-pin-map"></i> ${report.distance} km away
+              </span>
+            </div>
+            <h4 class="text-primary mb-1">৳${report.unit_price.toFixed(2)}</h4>
+            <small class="text-muted">per unit</small>
+            <p class="mb-0 mt-2">
+              <small>Qty: ${report.quantity}</small>
+            </p>
+          </div>
+        </div>
+      </div>
+    `;
+  }
   
   return card;
+}
+
+// Toggle details for grouped reports
+function toggleDetails(shopId) {
+  const detailsDiv = document.getElementById(`details-${shopId}`);
+  const button = event.target.closest('button');
+  
+  if (detailsDiv.style.display === 'none') {
+    detailsDiv.style.display = 'block';
+    button.innerHTML = '<i class="bi bi-x-lg"></i> Hide Details';
+  } else {
+    detailsDiv.style.display = 'none';
+    button.innerHTML = '<i class="bi bi-list-ul"></i> View Details';
+  }
 }
 
 // Display pagination
