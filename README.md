@@ -1,1 +1,1 @@
-# price_reporting_webapp
+# CS50-Price
